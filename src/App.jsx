@@ -239,7 +239,7 @@ function App() {
     const headerHeight = 50;
 
     return {
-      width: Math.max(750, maxX - minX + padding * 2),
+      width: Math.max(1000, maxX - minX + padding * 2),
       height: Math.max(220, maxY - minY + padding + headerHeight)
     };
   }, []);
@@ -270,10 +270,6 @@ function App() {
       return [];
     }
 
-    // Get child nodes for group size calculation
-    const childNodes = flowState.nodes.filter(n => n.parentId === 'neural-network');
-    const groupSize = flowState.isExpanded ? calculateGroupSize(childNodes) : null;
-
     return flowState.nodes.map(node => {
       const baseData = node.data || {};
 
@@ -293,15 +289,12 @@ function App() {
           if (node.type === 'group') {
             return {
               ...node,
-              style: groupSize ? {
-                ...node.style,
-                width: groupSize.width,
-                height: groupSize.height
-              } : node.style,
               data: {
                 ...baseData,
                 isExpanded: flowState.isExpanded,
                 onToggle: flowState.toggleExpanded,
+                onResize: flowState.updateGroupSize,
+                minGroupSize: flowState.minGroupSize,
                 label: 'Neural Network',
                 config: config,
                 trainingConfig: trainingConfig,
@@ -436,6 +429,9 @@ function App() {
     flowState.updateTrainingData,
     flowState.updatePredictionInput,
     flowState.updatePredictionOutput,
+    flowState.updateGroupSize,
+    flowState.groupSize,
+    flowState.minGroupSize,
     // Use stable signatures instead of object references
     configSignature,
     trainingConfigSignature,
@@ -450,7 +446,6 @@ function App() {
     handleTrain,
     handlePredict,
     handleTrainingStep,
-    calculateGroupSize,
     nnState.network,
   ]);
 

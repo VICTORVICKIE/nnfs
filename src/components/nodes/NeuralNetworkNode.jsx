@@ -1,4 +1,4 @@
-import { Handle, NodeResizer, Position } from '@xyflow/react';
+import { Handle, NodeResizer, Position, useReactFlow } from '@xyflow/react';
 import { useState } from 'react';
 import {
   selectCurrentStep,
@@ -8,6 +8,7 @@ import {
   selectTrainingHistory,
   useNeuralNetworkStore,
 } from '../../stores/neuralNetworkStore';
+import { resolveCollisions } from '../../utils/collisionDetection';
 import Cube3D from '../Cube3D';
 import './NodeStyles.css';
 
@@ -30,6 +31,17 @@ export default function NeuralNetworkNode({ data, selected }) {
   const [isRunning, setIsRunning] = useState(false);
   const [localStep, setLocalStep] = useState(0);
   const [localLoss, setLocalLoss] = useState(null);
+  const { setNodes } = useReactFlow();
+
+  const handleResizeEnd = () => {
+    setNodes((nds) =>
+      resolveCollisions(nds, {
+        maxIterations: 50,
+        overlapThreshold: 0.5,
+        margin: 15,
+      })
+    );
+  };
 
   // Use context state (updates live during training)
   const displayStep = isRunning ? localStep : currentStep;
@@ -76,6 +88,7 @@ export default function NeuralNetworkNode({ data, selected }) {
         isVisible={selected}
         minWidth={250}
         minHeight={200}
+        onResizeEnd={handleResizeEnd}
       />
       <Handle type="target" position={Position.Left} />
       <div className="node-header">Neural Network</div>

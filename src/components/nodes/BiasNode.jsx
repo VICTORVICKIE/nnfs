@@ -1,15 +1,27 @@
-import { Handle, Position, NodeResizer } from '@xyflow/react';
+import { Handle, NodeResizer, Position, useReactFlow } from '@xyflow/react';
 import { useState } from 'react';
+import { resolveCollisions } from '../../utils/collisionDetection';
 import './NodeStyles.css';
 
 export default function BiasNode({ data, selected }) {
-  const { 
-    layerIndex = 0, 
-    biases = [], 
-    size = 0 
+  const {
+    layerIndex = 0,
+    biases = [],
+    size = 0
   } = data;
-  
+
   const [isExpanded, setIsExpanded] = useState(false);
+  const { setNodes } = useReactFlow();
+
+  const handleResizeEnd = () => {
+    setNodes((nds) =>
+      resolveCollisions(nds, {
+        maxIterations: 50,
+        overlapThreshold: 0.5,
+        margin: 15,
+      })
+    );
+  };
 
   const formatValue = (val) => {
     if (typeof val === 'number') {
@@ -22,11 +34,12 @@ export default function BiasNode({ data, selected }) {
 
   return (
     <div className={`custom-node bias-node accordion-node ${isExpanded ? 'expanded' : ''}`}>
-      <NodeResizer 
-        color="#8b5cf6" 
+      <NodeResizer
+        color="#8b5cf6"
         isVisible={selected}
         minWidth={150}
         minHeight={isExpanded ? 150 : 50}
+        onResizeEnd={handleResizeEnd}
       />
       <Handle type="target" position={Position.Left} id="input" />
       <div className="node-header accordion-header" onClick={() => setIsExpanded(!isExpanded)}>

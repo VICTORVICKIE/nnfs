@@ -1,13 +1,25 @@
-import { Handle, NodeResizer, Position } from '@xyflow/react';
+import { Handle, NodeResizer, Position, useReactFlow } from '@xyflow/react';
 import { useState } from 'react';
 import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { selectCurrentStep, selectTrainingHistory, useNeuralNetworkStore } from '../../stores/neuralNetworkStore';
+import { resolveCollisions } from '../../utils/collisionDetection';
 import './NodeStyles.css';
 
 export default function TrainingProgressNode({ data, selected }) {
   // Use Zustand selector - only re-renders when training history changes
   const history = useNeuralNetworkStore(selectTrainingHistory);
   const currentStep = useNeuralNetworkStore(selectCurrentStep); // Subscribe for real-time updates
+  const { setNodes } = useReactFlow();
+
+  const handleResizeEnd = () => {
+    setNodes((nds) =>
+      resolveCollisions(nds, {
+        maxIterations: 50,
+        overlapThreshold: 0.5,
+        margin: 15,
+      })
+    );
+  };
 
   const chartData = history.map(({ step, loss }) => ({
     step,
@@ -21,6 +33,7 @@ export default function TrainingProgressNode({ data, selected }) {
         isVisible={selected}
         minWidth={350}
         minHeight={350}
+        onResizeEnd={handleResizeEnd}
       />
       <Handle type="target" position={Position.Top} id="input" />
       <div className="node-header">

@@ -238,6 +238,8 @@
   border-radius: 6px 6px 0 0;
   z-index: 10;
   gap: 15px;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 .config-panel {

@@ -1,27 +1,39 @@
-import { Handle, NodeResizer, Position } from '@xyflow/react';
+import { Handle, NodeResizer, Position, useReactFlow } from '@xyflow/react';
 import { useEffect, useState } from 'react';
+import { resolveCollisions } from '../../utils/collisionDetection';
 import './NodeStyles.css';
 
 // Custom group node component for neural network group
 export default function GroupNode({ data, selected }) {
   const {
     onToggle,
+    onResize,
+    minGroupSize = { width: 1000, height: 220 },
     label = 'Neural Network',
-    trainingData = { x: [], y: [] },
     trainingConfig = {},
     config = {},
     onTrain,
     onNetworkConfigChange,
     onTrainingConfigChange,
     isTraining = false,
-    currentStep = 0,
-    trainingHistory = [],
     isTrained = false
   } = data;
 
   const [isRunning, setIsRunning] = useState(false);
-  const [localStep, setLocalStep] = useState(0);
-  const [localLoss, setLocalLoss] = useState(null);
+  const [, setLocalStep] = useState(0);
+  const [, setLocalLoss] = useState(null);
+  const { setNodes } = useReactFlow();
+
+  const handleResizeEnd = (event, params) => {
+    onResize?.({ width: params.width, height: params.height });
+    setNodes((nds) =>
+      resolveCollisions(nds, {
+        maxIterations: 50,
+        overlapThreshold: 0.5,
+        margin: 15,
+      })
+    );
+  };
 
   // Extract config values with defaults
   const hiddenLayers = config.hiddenLayers || [4];
@@ -78,18 +90,14 @@ export default function GroupNode({ data, selected }) {
     }
   };
 
-  const displayStep = isRunning ? localStep : currentStep;
-  const displayLoss = isRunning
-    ? localLoss
-    : (trainingHistory.length > 0 ? trainingHistory[trainingHistory.length - 1]?.loss : null);
-
   return (
     <>
       <NodeResizer
         color="#646cff"
         isVisible={selected}
-        minWidth={750}
-        minHeight={220}
+        minWidth={minGroupSize.width}
+        minHeight={minGroupSize.height}
+        onResizeEnd={handleResizeEnd}
       />
       <Handle type="target" position={Position.Left} id="input" />
       <Handle type="source" position={Position.Right} id="output" />

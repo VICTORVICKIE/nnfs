@@ -1,7 +1,27 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 export function useFlowState(config = { hiddenLayers: [3] }) {
+  // Calculate minimum group size based on network architecture
+  const calculateMinimumGroupSize = useCallback((layers) => {
+    const layerSpacing = 280;
+    const neuronSpacing = 100;
+    const neuronSize = 60;
+    const padding = 50;
+    const headerHeight = 120;
+
+    const totalWidth = (layers.length - 1) * layerSpacing + neuronSize + (padding * 2);
+    const maxLayerSize = layers.reduce((max, size) => Math.max(max, size), 0);
+    const totalHeight = (maxLayerSize - 1) * neuronSpacing + neuronSize + padding + headerHeight;
+
+    return {
+      width: Math.max(1000, totalWidth),
+      height: Math.max(220, totalHeight)
+    };
+  }, []);
+
   const [isExpanded, setIsExpanded] = useState(false);
+  const [minGroupSize, setMinGroupSize] = useState({ width: 1000, height: 600 });
+  const [groupSize, setGroupSize] = useState({ width: 1000, height: 600 });
   const [trainingData, setTrainingData] = useState({ x: [[1], [2], [3], [4], [5]], y: [[2], [4], [6], [8], [10]] });
   const [predictionInput, setPredictionInput] = useState([7]);
   const [predictionOutput, setPredictionOutput] = useState(null);
@@ -12,6 +32,14 @@ export function useFlowState(config = { hiddenLayers: [3] }) {
     // Default to 1 input, 1 output for visualization (will be corrected during training)
     return [1, ...hiddenLayers, 1];
   }, [config.hiddenLayers]);
+
+  // Recalculate minimum and actual group size when hidden layers change
+  useEffect(() => {
+    const fullLayers = getFullLayers();
+    const minSize = calculateMinimumGroupSize(fullLayers);
+    setMinGroupSize(minSize);
+    setGroupSize(minSize);
+  }, [config.hiddenLayers, getFullLayers, calculateMinimumGroupSize]);
 
   const toggleExpanded = useCallback(() => {
     setIsExpanded(prev => !prev);
@@ -29,19 +57,41 @@ export function useFlowState(config = { hiddenLayers: [3] }) {
     setPredictionOutput(output);
   }, []);
 
+  const updateGroupSize = useCallback((size) => {
+    // Enforce minimum dimensions
+    setGroupSize({
+      width: Math.max(size.width, minGroupSize.width),
+      height: Math.max(size.height, minGroupSize.height)
+    });
+  }, [minGroupSize]);
+
   // Generate dynamic neuron nodes and edges based on network architecture
-  const generateNeuronNodesAndEdges = useCallback((layers) => {
+  const generateNeuronNodesAndEdges = useCallback((layers, parentSize = { width: 1000, height: 600 }) => {
     const nodes = [];
     const edges = [];
     const layerSpacing = 280;
     const neuronSpacing = 100;
-    const startX = 50; // Start relative to neurons-group with more padding
-    const startY = 50; // Start relative to neurons-group with more padding
+    const neuronSize = 60;
+    const headerHeight = 56; // Height reserved for group header controls
+    
+    // Calculate total dimensions of the neural graph
+    const totalWidth = (layers.length - 1) * layerSpacing + neuronSize;
+    const maxLayerSize = layers.reduce((max, size) => Math.max(max, size), 0);
+    const totalHeight = (maxLayerSize - 1) * neuronSpacing + neuronSize;
+    
+    // Parent container size (from parameter or default)
+    const parentWidth = parentSize.width || 1000;
+    const parentHeight = parentSize.height || 600;
+    
+    // Calculate centering offsets (accounting for header)
+    const availableHeight = parentHeight - headerHeight;
+    const startX = (parentWidth - totalWidth) / 2;
+    const startY = headerHeight + (availableHeight - totalHeight) / 2;
 
     // Create neuron nodes for each layer
     layers.forEach((layerSize, layerIndex) => {
       const layerX = startX + layerIndex * layerSpacing;
-      const layerStartY = startY + ((layers.reduce((max, size) => Math.max(max, size), 0) - layerSize) * neuronSpacing) / 2;
+      const layerStartY = startY + ((maxLayerSize - layerSize) * neuronSpacing) / 2;
 
       for (let neuronIndex = 0; neuronIndex < layerSize; neuronIndex++) {
         nodes.push({
@@ -51,7 +101,7 @@ export function useFlowState(config = { hiddenLayers: [3] }) {
             x: layerX,
             y: layerStartY + neuronIndex * neuronSpacing
           },
-          parentId: 'neurons-group',
+          parentId: 'neural-network',
           extent: 'parent',
           draggable: false,
           data: {
@@ -60,7 +110,7 @@ export function useFlowState(config = { hiddenLayers: [3] }) {
             isInput: layerIndex === 0,
             isOutput: layerIndex === layers.length - 1
           },
-          style: { width: 60, height: 60 }
+          style: { width: neuronSize, height: neuronSize }
         });
       }
     });
@@ -84,7 +134,7 @@ export function useFlowState(config = { hiddenLayers: [3] }) {
             labelStyle: { fill: '#bbb', fontSize: 8, fontWeight: 500 },
             labelBgStyle: { fill: '#1a1a1a', fillOpacity: 0.9, rx: 2, ry: 2 },
             labelBgPadding: [2, 4],
-            style: { stroke: '#666', strokeWidth: 1.5 },
+            style: { stroke: '#666', strokeWidth: 1.5, zIndex: "10" },
           });
         }
       }
@@ -139,83 +189,11 @@ export function useFlowState(config = { hiddenLayers: [3] }) {
     if (!isExpanded) return [];
 
     const fullLayers = getFullLayers();
-    const { nodes: neuronNodes } = generateNeuronNodesAndEdges(fullLayers);
+    const { nodes: neuronNodes } = generateNeuronNodesAndEdges(fullLayers, groupSize);
 
-    // Calculate neurons group size based on actual content
-    const maxLayerSize = Math.max(...fullLayers);
-    const numLayers = fullLayers.length;
-    const neuronsPadding = 60; // Increased padding for better spacing
-    const neuronsGroupWidth = 50 + (numLayers - 1) * 280 + 60 + neuronsPadding * 2;
-    const neuronsGroupHeight = 50 + maxLayerSize * 100 + neuronsPadding * 2;
+    return neuronNodes;
+  }, [isExpanded, getFullLayers, generateNeuronNodesAndEdges, groupSize]);
 
-    const spacing = 20;
-
-    const childNodes = [
-      {
-        id: 'neurons-group',
-        type: 'simpleGroup',
-        position: { x: spacing, y: spacing + 50 }, // Added offset for header height
-        parentId: 'neural-network',
-        extent: 'parent',
-        selectable: false,
-        style: {
-          width: neuronsGroupWidth,
-          height: neuronsGroupHeight,
-          backgroundColor: 'rgba(100, 150, 200, 0.03)',
-          border: '1px dashed #4a90e2',
-          borderRadius: '8px'
-        },
-        data: {}
-      },
-      ...neuronNodes
-    ];
-
-    return childNodes;
-  }, [isExpanded, getFullLayers, generateNeuronNodesAndEdges]);
-
-  // Calculate group size based on child nodes' bounding box
-  // This will auto-adjust when child nodes are resized or moved
-  const calculateGroupSize = useCallback((childNodes) => {
-    if (!childNodes || childNodes.length === 0) {
-      return { width: 750, height: 220 };
-    }
-
-    let minX = Infinity;
-    let minY = Infinity;
-    let maxX = -Infinity;
-    let maxY = -Infinity;
-
-    // Only calculate based on direct children (not nested group children)
-    childNodes.filter(node => node.parentId === 'neural-network').forEach(node => {
-      const x = node.position?.x || 0;
-      const y = node.position?.y || 0;
-      // Get width/height from node dimensions or style
-      const width = node.width || node.measured?.width || node.style?.width || 200;
-      const height = node.height || node.measured?.height || node.style?.height || 50;
-
-      minX = Math.min(minX, x);
-      minY = Math.min(minY, y);
-      maxX = Math.max(maxX, x + width);
-      maxY = Math.max(maxY, y + height);
-    });
-
-    // Add padding to ensure children fit comfortably
-    const padding = 30;
-    const headerHeight = 70; // Height of group header (increased for config panel)
-
-    return {
-      width: Math.max(750, maxX - minX + padding * 2),
-      height: Math.max(220, maxY - minY + padding * 2 + headerHeight)
-    };
-  }, []);
-
-  // Calculate group size from expanded nodes
-  const groupSize = useMemo(() => {
-    if (!isExpanded) {
-      return null;
-    }
-    return calculateGroupSize(expandedNodes);
-  }, [isExpanded, expandedNodes, calculateGroupSize]);
 
   // Calculate node positions for collapsed view (horizontal)
   const collapsedNodes = useMemo(() => [
@@ -233,9 +211,9 @@ export function useFlowState(config = { hiddenLayers: [3] }) {
       id: 'neural-network',
       type: isExpanded ? 'group' : 'neuralNetwork',
       position: { x: isExpanded ? 400 : 450, y: isExpanded ? 80 : 100 },
-      style: isExpanded && groupSize ? {
-        width: groupSize.width || 750,
-        height: groupSize.height || 220,
+      style: isExpanded ? {
+        width: groupSize.width || 1000,
+        height: groupSize.height || 600,
         backgroundColor: 'rgba(100, 100, 100, 0.05)',
         border: '2px solid #646cff',
         borderRadius: '8px'
@@ -243,6 +221,8 @@ export function useFlowState(config = { hiddenLayers: [3] }) {
       data: {
         isExpanded,
         onToggle: toggleExpanded,
+        onResize: updateGroupSize,
+        minGroupSize: isExpanded ? minGroupSize : undefined,
         label: 'Neural Network'
       }
     },
@@ -285,7 +265,7 @@ export function useFlowState(config = { hiddenLayers: [3] }) {
         onUpdateInput: updatePredictionInput
       }
     }
-  ], [isExpanded, trainingData, predictionInput, predictionOutput, toggleExpanded, updateTrainingData, updatePredictionInput, groupSize]);
+  ], [isExpanded, groupSize, minGroupSize, trainingData, predictionInput, predictionOutput, toggleExpanded, updateGroupSize, updateTrainingData, updatePredictionInput]);
 
   // Collapsed view edges
   const collapsedEdges = useMemo(() => [
@@ -326,7 +306,7 @@ export function useFlowState(config = { hiddenLayers: [3] }) {
   // Expanded view edges
   const expandedEdges = useMemo(() => {
     const fullLayers = getFullLayers();
-    const { edges: neuronEdges } = generateNeuronNodesAndEdges(fullLayers);
+    const { edges: neuronEdges } = generateNeuronNodesAndEdges(fullLayers, groupSize);
 
     const edges = [
       {
@@ -365,7 +345,7 @@ export function useFlowState(config = { hiddenLayers: [3] }) {
     ];
 
     return edges;
-  }, [getFullLayers, generateNeuronNodesAndEdges]);
+  }, [getFullLayers, generateNeuronNodesAndEdges, groupSize]);
 
   // Get current nodes and edges based on expanded state
   const nodes = useMemo(() => {
@@ -385,6 +365,9 @@ export function useFlowState(config = { hiddenLayers: [3] }) {
   return {
     isExpanded,
     toggleExpanded,
+    groupSize,
+    minGroupSize,
+    updateGroupSize,
     trainingData,
     updateTrainingData,
     predictionInput,

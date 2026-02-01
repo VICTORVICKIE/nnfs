@@ -1,11 +1,23 @@
-import { Handle, NodeResizer, Position } from '@xyflow/react';
+import { Handle, NodeResizer, Position, useReactFlow } from '@xyflow/react';
 import { useEffect, useRef } from 'react';
+import { resolveCollisions } from '../../utils/collisionDetection';
 import './NodeStyles.css';
 
 export default function PredictionNode({ data, selected }) {
   const { input = [], output = null, onUpdateInput, onPredict, isTrained = false } = data;
   const prevInputRef = useRef(input);
   const isPredictingRef = useRef(false);
+  const { setNodes } = useReactFlow();
+
+  const handleResizeEnd = () => {
+    setNodes((nds) =>
+      resolveCollisions(nds, {
+        maxIterations: 50,
+        overlapThreshold: 0.5,
+        margin: 15,
+      })
+    );
+  };
 
   const handleInputChange = (e) => {
     onUpdateInput?.(e.target.value);
@@ -43,6 +55,7 @@ export default function PredictionNode({ data, selected }) {
         isVisible={selected}
         minWidth={200}
         minHeight={150}
+        onResizeEnd={handleResizeEnd}
       />
       <Handle type="target" position={Position.Left} id="input" />
       <div className="node-header">Prediction</div>

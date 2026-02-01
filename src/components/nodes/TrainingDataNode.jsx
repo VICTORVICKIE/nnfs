@@ -1,6 +1,7 @@
-import { Handle, NodeResizer, Position } from '@xyflow/react';
+import { Handle, NodeResizer, Position, useReactFlow } from '@xyflow/react';
 import { useState } from 'react';
 import { useNeuralNetworkStore } from '../../stores/neuralNetworkStore';
+import { resolveCollisions } from '../../utils/collisionDetection';
 import './NodeStyles.css';
 
 export default function TrainingDataNode({ data, selected }) {
@@ -8,6 +9,17 @@ export default function TrainingDataNode({ data, selected }) {
   const [x, setX] = useState(initialX);
   const [y, setY] = useState(initialY);
   const updateTrainingData = useNeuralNetworkStore(state => state.updateTrainingData);
+  const { setNodes } = useReactFlow();
+
+  const handleResizeEnd = () => {
+    setNodes((nds) =>
+      resolveCollisions(nds, {
+        maxIterations: 50,
+        overlapThreshold: 0.5,
+        margin: 15,
+      })
+    );
+  };
 
   const parseValue = (value) => {
     if (typeof value === 'string') {
@@ -61,6 +73,7 @@ export default function TrainingDataNode({ data, selected }) {
         isVisible={selected}
         minWidth={200}
         minHeight={150}
+        onResizeEnd={handleResizeEnd}
       />
       <Handle type="target" position={Position.Left} />
       <div className="node-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>

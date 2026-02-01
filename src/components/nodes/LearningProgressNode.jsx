@@ -1,6 +1,7 @@
-import { Handle, NodeResizer, Position } from '@xyflow/react';
+import { Handle, NodeResizer, Position, useReactFlow } from '@xyflow/react';
 import { CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { selectIsTrained, selectNetworkRef, selectParameters, selectTrainingData, useNeuralNetworkStore } from '../../stores/neuralNetworkStore';
+import { resolveCollisions } from '../../utils/collisionDetection';
 import './NodeStyles.css';
 
 export default function LearningProgressNode({ data, selected }) {
@@ -9,6 +10,17 @@ export default function LearningProgressNode({ data, selected }) {
     const isTrained = useNeuralNetworkStore(selectIsTrained);
     const networkRef = useNeuralNetworkStore(selectNetworkRef);
     const parameters = useNeuralNetworkStore(selectParameters); // Subscribe to parameter updates during training
+    const { setNodes } = useReactFlow();
+
+    const handleResizeEnd = () => {
+        setNodes((nds) =>
+            resolveCollisions(nds, {
+                maxIterations: 50,
+                overlapThreshold: 0.5,
+                margin: 15,
+            })
+        );
+    };
 
     // Compute predictions for training data to show actual vs predicted
     let predictedValues = [];
@@ -41,6 +53,7 @@ export default function LearningProgressNode({ data, selected }) {
                 isVisible={selected}
                 minWidth={380}
                 minHeight={380}
+                onResizeEnd={handleResizeEnd}
             />
             <Handle type="target" position={Position.Top} id="input" />
             <div className="node-header">
