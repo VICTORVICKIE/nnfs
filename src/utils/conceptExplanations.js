@@ -53,6 +53,36 @@ for (let step = 0; step < 50; step++) {
     fileReference: 'src/utils/neuralNetwork.js',
   },
 
+  'weights-bias': {
+    title: 'Weights & Bias',
+    explanation: `
+      <p>
+        <strong>Weights</strong> determine how much influence each input has on the output.
+        Think of them as importance scores—some inputs matter more than others.
+      </p>
+      <p>
+        <strong>Bias</strong> is like a baseline or starting point. It allows the neuron
+        to adjust its output even when all inputs are zero.
+      </p>
+      <p>
+        Together they work like this: <code>output = (input₁ × weight₁) + (input₂ × weight₂) + ... + bias</code>
+      </p>
+      <p>
+        During training, the network adjusts these weights and biases to minimize errors
+        and learn the right patterns from your data.
+      </p>
+    `,
+    codeSnippet: `// Simple example with weights and bias
+const input = [1, 2];
+const weights = [0.5, 0.8];
+const bias = 0.1;
+
+// Calculate neuron output
+const output = input[0]*weights[0] + input[1]*weights[1] + bias;
+// Result: 1*0.5 + 2*0.8 + 0.1 = 2.2`,
+    fileReference: 'src/utils/neuralNetwork.js',
+  },
+
   'activation': {
     title: 'Activation Functions',
     explanation: `
@@ -149,7 +179,7 @@ learningRate = 0.01;`,
     explanation: `
       <p>
         Prediction is using the trained model to <strong>get answers for new data</strong>.
-        No learning happens here—just calculation, like taking the final exam after studying.
+        No learning happens here just calculation, like taking the final exam after studying.
       </p>
       <p>
         You feed in new input, and the network runs through all its learned weights
@@ -162,11 +192,25 @@ learningRate = 0.01;`,
   'training-progress': {
     title: 'Training Progress',
     explanation: `
+      <p>
+        Training progress shows <strong>whether learning is working</strong> by tracking
+        the loss over time.
+      </p>
+      <ul>
+        <li>Loss going down → learning is working well</li>
+        <li>Loss flat → model has finished learning or is stuck</li>
+        <li>Loss going up → learning rate is too high</li>
+      </ul>
+      <p>
+        It's like finding the right balance in life, pushing too hard leads to burnout, 
+        pushing too little leads to stagnation. You want to apply just the right amount 
+        of effort to see steady growth.
+      </p>
       <div style="text-align: center; margin: 20px 0;">
         <img 
-          src="https://imgs.xkcd.com/comics/machine_learning.png" 
-          alt="Machine Learning - XKCD"
-          style="max-width: 100%; max-height: 70vh; display: block; margin: 0 auto;"
+          src="https://www.jeremyjordan.me/content/images/2018/02/Screen-Shot-2018-02-24-at-11.47.09-AM.png" 
+          alt="Training Progress Visualization"
+          style="max-width: 100%; max-height: 60vh; display: block; margin: 0 auto;"
         />
       </div>
     `,
@@ -180,7 +224,7 @@ learningRate = 0.01;`,
         Training method is <strong>how the network calculates what to fix</strong>.
       </p>
       <p>
-        <strong>Backpropagation</strong> is fast and accurate—like using GPS navigation
+        <strong>Backpropagation</strong> is fast and accurate like using GPS navigation
         to find the best route. It's what everyone uses in practice.
       </p>
       <p>
@@ -194,5 +238,19 @@ method: 'backpropagation'
 // Finite Difference
 method: 'finite-difference'`,
     fileReference: 'src/utils/neuralNetwork.js',
+  },
+
+  'learning-progress': {
+    title: 'Learning Progress',
+    explanation: `
+      <div style="text-align: center; margin: 20px 0;">
+        <img 
+          src="https://imgs.xkcd.com/comics/machine_learning.png" 
+          alt="Machine Learning - XKCD"
+          style="max-width: 100%; max-height: 70vh; display: block; margin: 0 auto;"
+        />
+      </div>
+    `,
+    fileReference: 'LearningProgressNode.jsx',
   },
 };

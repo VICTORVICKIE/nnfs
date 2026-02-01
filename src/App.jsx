@@ -353,7 +353,7 @@ function App() {
             ...node,
             data: {
               ...baseData,
-              onHeaderClick: () => setCurrentConcept('training-progress')
+              onHeaderClick: () => setCurrentConcept('learning-progress')
             }
           };
 

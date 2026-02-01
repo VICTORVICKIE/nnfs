@@ -123,7 +123,18 @@ export default function GroupNode({ data, selected }) {
         <div className="config-panel">
           <div className="config-row">
             <label className="config-label">
-              <span className="label-text">Hidden Layers:</span>
+              <span 
+                className="label-text clickable-label" 
+                onClick={(e) => {
+                  if (openConceptDialog) {
+                    e.stopPropagation();
+                    openConceptDialog('hidden-layer');
+                  }
+                }}
+                title="Click to learn about Hidden Layers"
+              >
+                Hidden Layers:
+              </span>
               <input
                 type="text"
                 value={pendingHiddenLayers}
