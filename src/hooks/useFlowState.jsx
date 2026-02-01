@@ -73,16 +73,16 @@ export function useFlowState(config = { hiddenLayers: [3] }) {
     const neuronSpacing = 100;
     const neuronSize = 60;
     const headerHeight = 56; // Height reserved for group header controls
-    
+
     // Calculate total dimensions of the neural graph
     const totalWidth = (layers.length - 1) * layerSpacing + neuronSize;
     const maxLayerSize = layers.reduce((max, size) => Math.max(max, size), 0);
     const totalHeight = (maxLayerSize - 1) * neuronSpacing + neuronSize;
-    
+
     // Parent container size (from parameter or default)
     const parentWidth = parentSize.width || 1000;
     const parentHeight = parentSize.height || 600;
-    
+
     // Calculate centering offsets (accounting for header)
     const availableHeight = parentHeight - headerHeight;
     const startX = (parentWidth - totalWidth) / 2;

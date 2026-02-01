@@ -71,7 +71,7 @@ export default function FlowCanvas({ nodes: initialNodes, edges: initialEdges, n
     if (prevIsExpandedRef.current !== isExpanded || structureChanged || neuronPositionsChanged) {
       prevIsExpandedRef.current = isExpanded;
       prevNodeIdsRef.current = newNodeIds;
-      
+
       // Update neuron positions cache
       const newNeuronPositions = new Map();
       initialNodes.forEach(node => {
@@ -80,7 +80,7 @@ export default function FlowCanvas({ nodes: initialNodes, edges: initialEdges, n
         }
       });
       prevNeuronPositionsRef.current = newNeuronPositions;
-      
+
       setNodes(initialNodes);
     } else {
       // Update only node data without changing positions/dimensions

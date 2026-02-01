@@ -11,11 +11,21 @@
   padding: 20px;
   background: #2a2a2a;
   border-bottom: 1px solid #444;
-  text-align: center;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.app-header .header-left {
+  text-align: left;
+}
+
+.app-header .header-right {
+  text-align: right;
 }
 
 .app-header h1 {
-  margin: 0 0 10px 0;
+  margin: 0 0 5px 0;
   font-size: 24px;
   color: #fff;
 }
@@ -24,4 +34,13 @@
   margin: 0;
   color: #aaa;
   font-size: 14px;
+}
+
+.app-header a {
+  color: #4ade80;
+  text-decoration: none;
+}
+
+.app-header a:hover {
+  text-decoration: underline;
 }

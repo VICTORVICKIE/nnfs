@@ -4,11 +4,78 @@ import { useNeuralNetworkStore } from '../../stores/neuralNetworkStore';
 import { resolveCollisions } from '../../utils/collisionDetection';
 import './NodeStyles.css';
 
+// Preset datasets with recommended hidden layer configurations
+const PRESET_DATASETS = {
+  custom: {
+    name: 'Custom',
+    x: [[1], [2], [3], [4], [5]],
+    y: [[2], [4], [6], [8], [10]],
+    hiddenLayers: [1],
+    description: 'Custom dataset'
+  },
+  twice: {
+    name: 'Twice (f(x) = 2x)',
+    x: [[1], [2], [3], [4], [5], [6], [7], [8]],
+    y: [[2], [4], [6], [8], [10], [12], [14], [16]],
+    hiddenLayers: [1],
+    description: 'Linear function - multiply by 2'
+  },
+  xor: {
+    name: 'XOR Gate',
+    x: [[0, 0], [0, 1], [1, 0], [1, 1]],
+    y: [[0], [1], [1], [0]],
+    hiddenLayers: [2],
+    description: 'Non-linear XOR logic gate'
+  },
+  and: {
+    name: 'AND Gate',
+    x: [[0, 0], [0, 1], [1, 0], [1, 1]],
+    y: [[0], [0], [0], [1]],
+    hiddenLayers: [1],
+    description: 'AND logic gate'
+  },
+  or: {
+    name: 'OR Gate',
+    x: [[0, 0], [0, 1], [1, 0], [1, 1]],
+    y: [[0], [1], [1], [1]],
+    hiddenLayers: [1],
+    description: 'OR logic gate'
+  },
+  quadratic: {
+    name: 'Quadratic (f(x) = x²)',
+    x: [[0], [1], [2], [3], [4], [5]],
+    y: [[0], [1], [4], [9], [16], [25]],
+    hiddenLayers: [4],
+    description: 'Quadratic function'
+  },
+  sine: {
+    name: 'Sine Wave',
+    x: [[0], [0.5], [1], [1.5], [2], [2.5], [3]],
+    y: [[0], [0.479], [0.841], [0.997], [0.909], [0.599], [0.141]],
+    hiddenLayers: [6],
+    description: 'Sine wave approximation'
+  },
+  circle: {
+    name: 'Circle Classification',
+    x: [
+      [0, 0], [0, 1], [1, 0], [1, 1],
+      [0.5, 0.5], [0.8, 0.8], [0.2, 0.2],
+      [0.9, 0.1], [0.1, 0.9]
+    ],
+    y: [[0], [0], [0], [0], [1], [0], [1], [0], [0]],
+    hiddenLayers: [4],
+    description: 'Classify points inside/outside circle'
+  }
+};
+
 export default function TrainingDataNode({ data, selected }) {
   const { x: initialX = [], y: initialY = [] } = data;
   const [x, setX] = useState(initialX);
   const [y, setY] = useState(initialY);
+  const [selectedPreset, setSelectedPreset] = useState('custom');
+  const [hasError, setHasError] = useState(false);
   const updateTrainingData = useNeuralNetworkStore(state => state.updateTrainingData);
+  const updateConfig = useNeuralNetworkStore(state => state.updateConfig);
   const { setNodes } = useReactFlow();
 
   const handleResizeEnd = () => {
@@ -43,17 +110,37 @@ export default function TrainingDataNode({ data, selected }) {
     const parsedY = y.map(parseValue).filter(arr => arr.length > 0);
 
     if (parsedX.length === 0 || parsedY.length === 0) {
-      alert('Training data is empty. Please add at least one sample.');
+      setHasError(true);
       return;
     }
 
     if (parsedX.length !== parsedY.length) {
-      alert(`Data mismatch: ${parsedX.length} inputs but ${parsedY.length} outputs. They must match.`);
+      setHasError(true);
       return;
     }
 
+    // Clear any previous errors
+    setHasError(false);
+
     // Save to Zustand store
     updateTrainingData({ x: parsedX, y: parsedY });
+
+    // Update hidden layers if using a preset
+    if (selectedPreset !== 'custom' && PRESET_DATASETS[selectedPreset]) {
+      updateConfig({ hiddenLayers: PRESET_DATASETS[selectedPreset].hiddenLayers });
+    }
+  };
+
+  const handlePresetChange = (e) => {
+    const preset = e.target.value;
+    setSelectedPreset(preset);
+    setHasError(false);
+
+    if (preset !== 'custom' && PRESET_DATASETS[preset]) {
+      const dataset = PRESET_DATASETS[preset];
+      setX(dataset.x);
+      setY(dataset.y);
+    }
   };
 
   const addSample = () => {
@@ -88,6 +175,42 @@ export default function TrainingDataNode({ data, selected }) {
         </button>
       </div>
       <div className="node-content">
+        <div className="data-section" style={{ marginBottom: '10px' }}>
+          <div className="section-title">Dataset Preset</div>
+          <select
+            value={selectedPreset}
+            onChange={handlePresetChange}
+            onMouseDown={(e) => e.stopPropagation()}
+            className="nodrag"
+            style={{
+              width: '100%',
+              padding: '6px',
+              fontSize: '12px',
+              borderRadius: '4px',
+              border: '1px solid #444',
+              backgroundColor: '#2a2a2a',
+              color: '#fff',
+              cursor: 'pointer'
+            }}
+          >
+            {Object.entries(PRESET_DATASETS).map(([key, dataset]) => (
+              <option key={key} value={key}>
+                {dataset.name}
+              </option>
+            ))}
+          </select>
+          {selectedPreset !== 'custom' && PRESET_DATASETS[selectedPreset] && (
+            <div style={{
+              fontSize: '11px',
+              color: '#888',
+              marginTop: '4px',
+              fontStyle: 'italic'
+            }}>
+              {PRESET_DATASETS[selectedPreset].description}
+              {' '} (Hidden: [{PRESET_DATASETS[selectedPreset].hiddenLayers.join(', ')}])
+            </div>
+          )}
+        </div>
         <div className="data-section">
           <div className="section-title">Input x[]</div>
           {x.map((sample, idx) => (
@@ -99,11 +222,13 @@ export default function TrainingDataNode({ data, selected }) {
                   const newX = [...x];
                   newX[idx] = e.target.value;
                   setX(newX);
+                  setHasError(false);
                 }}
                 onMouseDown={(e) => e.stopPropagation()}
                 onPointerDown={(e) => e.stopPropagation()}
                 className="data-input nodrag"
                 placeholder="1"
+                style={hasError ? { border: '2px solid #ef4444' } : {}}
               />
               <button
                 onClick={(e) => {
@@ -135,11 +260,13 @@ export default function TrainingDataNode({ data, selected }) {
                   const newY = [...y];
                   newY[idx] = e.target.value;
                   setY(newY);
+                  setHasError(false);
                 }}
                 onMouseDown={(e) => e.stopPropagation()}
                 onPointerDown={(e) => e.stopPropagation()}
                 className="data-input nodrag"
                 placeholder="0"
+                style={hasError ? { border: '2px solid #ef4444' } : {}}
               />
             </div>
           ))}

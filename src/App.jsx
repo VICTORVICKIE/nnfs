@@ -102,7 +102,7 @@ function App() {
     const parsedInput = parseInput(predictionInput);
 
     if (parsedInput.length === 0) {
-      alert('Please enter a valid input value');
+      console.error('Please enter a valid input value');
       return;
     }
 
@@ -118,12 +118,12 @@ function App() {
 
     // Validate training data exists
     if (!x || !y || !Array.isArray(x) || !Array.isArray(y)) {
-      alert('Invalid training data: x and y must be arrays');
+      console.error('Invalid training data: x and y must be arrays');
       return;
     }
 
     if (x.length === 0 || y.length === 0) {
-      alert('Training data is empty. Please add training samples in the Training Data node.');
+      console.error('Training data is empty. Please add training samples in the Training Data node.');
       return;
     }
 
@@ -148,23 +148,23 @@ function App() {
     const parsedY = y.map(parseInput).filter(arr => arr.length > 0);
 
     if (parsedX.length === 0 || parsedY.length === 0) {
-      alert('Training data is empty after parsing. Please check your input values.');
+      console.error('Training data is empty after parsing. Please check your input values.');
       return;
     }
 
     if (parsedX.length !== parsedY.length) {
-      alert(`Training data mismatch: ${parsedX.length} inputs but ${parsedY.length} outputs. They must match.`);
+      console.error(`Training data mismatch: ${parsedX.length} inputs but ${parsedY.length} outputs. They must match.`);
       return;
     }
 
     // Validate that all samples are arrays of numbers
     for (let i = 0; i < parsedX.length; i++) {
       if (!Array.isArray(parsedX[i]) || parsedX[i].some(v => typeof v !== 'number' || isNaN(v))) {
-        alert(`Invalid input at sample ${i + 1}: must be comma-separated numbers`);
+        console.error(`Invalid input at sample ${i + 1}: must be comma-separated numbers`);
         return;
       }
       if (!Array.isArray(parsedY[i]) || parsedY[i].some(v => typeof v !== 'number' || isNaN(v))) {
-        alert(`Invalid output at sample ${i + 1}: must be comma-separated numbers`);
+        console.error(`Invalid output at sample ${i + 1}: must be comma-separated numbers`);
         return;
       }
     }
@@ -456,8 +456,16 @@ function App() {
   return (
     <div className="app">
       <div className="app-header">
-        <h1>Neural Network Flowchart</h1>
-        <p>Interactive visualization of neural network training and prediction</p>
+        <div className="header-left">
+          <h1>Neural Network From Scratch</h1>
+          <p>Visualization by Vignesh Kumar S</p>
+        </div>
+        <div className="header-right">
+          <p>
+            Reference: <a href="https://www.youtube.com/playlist?list=PLpM-Dvs8t0VZPZKggcql-MmjaBdZKeDMw" target="_blank" rel="noopener noreferrer">Neural Networks from Scratch</a>
+          </p>
+          <p>Tsoding</p>
+        </div>
       </div>
       <FlowCanvas
         nodes={nodesWithData}
