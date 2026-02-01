@@ -123,8 +123,8 @@ export default function GroupNode({ data, selected }) {
         <div className="config-panel">
           <div className="config-row">
             <label className="config-label">
-              <span 
-                className="label-text clickable-label" 
+              <span
+                className="label-text clickable-label"
                 onClick={(e) => {
                   if (openConceptDialog) {
                     e.stopPropagation();

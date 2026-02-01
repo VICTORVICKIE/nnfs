@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import './App.css';
 import ConceptDialog from './components/ConceptDialog';
+import ReferencesDialog from './components/ReferencesDialog';
 import WeightEdge from './components/edges/WeightEdge';
 import FlowCanvas from './components/FlowCanvas';
 import BiasNode from './components/nodes/BiasNode';
@@ -52,6 +53,7 @@ const edgeTypes = {
 
 function App() {
   const [currentConcept, setCurrentConcept] = useState(null);
+  const [showReferences, setShowReferences] = useState(false);
 
   // Get config from Zustand store
   const config = useNeuralNetworkStore(selectConfig);
@@ -475,9 +477,14 @@ function App() {
           </div>
           <div className="header-right">
             <p>
-              Reference: <a href="https://www.youtube.com/playlist?list=PLpM-Dvs8t0VZPZKggcql-MmjaBdZKeDMw" target="_blank" rel="noopener noreferrer">Neural Networks from Scratch</a>
+              <a 
+                href="#" 
+                onClick={(e) => { e.preventDefault(); setShowReferences(true); }}
+                style={{ cursor: 'pointer', textDecoration: 'underline' }}
+              >
+                References
+              </a>
             </p>
-            <p>Tsoding</p>
           </div>
         </div>
         <FlowCanvas
@@ -493,6 +500,12 @@ function App() {
         <ConceptDialog
           conceptKey={currentConcept}
           onClose={() => setCurrentConcept(null)}
+        />
+      )}
+
+      {showReferences && (
+        <ReferencesDialog
+          onClose={() => setShowReferences(false)}
         />
       )}
     </>

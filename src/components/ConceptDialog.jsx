@@ -30,8 +30,8 @@ export default function ConceptDialog({ conceptKey, onClose }) {
                 <div className="concept-dialog-body">
                     <h2 className="concept-title">{concept.title}</h2>
 
-                    <div 
-                        className="concept-explanation" 
+                    <div
+                        className="concept-explanation"
                         dangerouslySetInnerHTML={{ __html: concept.explanation }}
                     />
 
