@@ -10,6 +10,7 @@ export default function TrainingProgressNode({ data, selected }) {
   const history = useNeuralNetworkStore(selectTrainingHistory);
   const currentStep = useNeuralNetworkStore(selectCurrentStep); // Subscribe for real-time updates
   const { setNodes } = useReactFlow();
+  const { openConceptDialog } = data || {};
 
   const handleResizeEnd = () => {
     setNodes((nds) =>
@@ -36,8 +37,18 @@ export default function TrainingProgressNode({ data, selected }) {
         onResizeEnd={handleResizeEnd}
       />
       <Handle type="target" position={Position.Top} id="input" />
-      <div className="node-header">
-        <span>Training Progress</span>
+      <div
+        className="node-header clickable-header"
+        onClick={(e) => {
+          if (openConceptDialog) {
+            e.stopPropagation();
+            openConceptDialog('training-progress');
+          }
+        }}
+        title="Click to learn about Training Progress"
+        style={{ cursor: openConceptDialog ? 'pointer' : 'default' }}
+      >
+        Training Progress
       </div>
       {(
         <div className="node-content">

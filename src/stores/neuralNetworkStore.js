@@ -23,7 +23,7 @@ export const useNeuralNetworkStore = create((set, get) => ({
   trainingConfig: {
     steps: 30,
     learningRate: 0.01,
-    method: 'gradient-descent',
+    method: 'backpropagation',
   },
   
   // Training data

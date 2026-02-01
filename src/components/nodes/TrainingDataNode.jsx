@@ -69,7 +69,7 @@ const PRESET_DATASETS = {
 };
 
 export default function TrainingDataNode({ data, selected }) {
-  const { x: initialX = [], y: initialY = [] } = data;
+  const { x: initialX = [], y: initialY = [], openConceptDialog } = data;
   const [x, setX] = useState(initialX);
   const [y, setY] = useState(initialY);
   const [selectedPreset, setSelectedPreset] = useState('custom');
@@ -164,7 +164,19 @@ export default function TrainingDataNode({ data, selected }) {
       />
       <Handle type="target" position={Position.Left} />
       <div className="node-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <span>Training Data</span>
+        <span
+          className="clickable-header"
+          onClick={(e) => {
+            if (openConceptDialog) {
+              e.stopPropagation();
+              openConceptDialog('training-data');
+            }
+          }}
+          title="Click to learn about Training Data"
+          style={{ cursor: openConceptDialog ? 'pointer' : 'default' }}
+        >
+          Training Data
+        </span>
         <button
           onClick={handleSave}
           onMouseDown={(e) => e.stopPropagation()}

@@ -16,7 +16,8 @@ export default function GroupNode({ data, selected }) {
     onNetworkConfigChange,
     onTrainingConfigChange,
     isTraining = false,
-    isTrained = false
+    isTrained = false,
+    openConceptDialog
   } = data;
 
   const [isRunning, setIsRunning] = useState(false);
@@ -104,7 +105,18 @@ export default function GroupNode({ data, selected }) {
       <Handle type="source" position={Position.Bottom} id="bottom-left" style={{ left: '33%' }} />
       <Handle type="source" position={Position.Bottom} id="bottom-right" style={{ left: '66%' }} />
       <div className="neural-network-group-header">
-        <div className="group-title">{label}</div>
+        <div
+          className="group-title clickable-header"
+          onClick={(e) => {
+            if (openConceptDialog) {
+              e.stopPropagation();
+              openConceptDialog('neural-network');
+            }
+          }}
+          title="Click to learn about Neural Networks"
+        >
+          {label}
+        </div>
         {isTrained && (
           <div className="config-warning">⚠️ Changes will invalidate training</div>
         )}
@@ -124,7 +136,18 @@ export default function GroupNode({ data, selected }) {
               />
             </label>
             <label className="config-label">
-              <span className="label-text">Activation:</span>
+              <span
+                className="label-text clickable-label"
+                onClick={(e) => {
+                  if (openConceptDialog) {
+                    e.stopPropagation();
+                    openConceptDialog('activation');
+                  }
+                }}
+                title="Click to learn about Activation Functions"
+              >
+                Activation:
+              </span>
               <select
                 value={pendingActivation}
                 onChange={(e) => setPendingActivation(e.target.value)}
@@ -134,11 +157,21 @@ export default function GroupNode({ data, selected }) {
               >
                 <option value="relu">ReLU</option>
                 <option value="sigmoid">Sigmoid</option>
-                <option value="tanh">Tanh</option>
               </select>
             </label>
             <label className="config-label">
-              <span className="label-text">Cost:</span>
+              <span
+                className="label-text clickable-label"
+                onClick={(e) => {
+                  if (openConceptDialog) {
+                    e.stopPropagation();
+                    openConceptDialog('cost');
+                  }
+                }}
+                title="Click to learn about Cost Function"
+              >
+                Cost:
+              </span>
               <select
                 value={pendingCostFunction}
                 onChange={(e) => setPendingCostFunction(e.target.value)}
@@ -147,11 +180,21 @@ export default function GroupNode({ data, selected }) {
                 className="config-select nodrag"
               >
                 <option value="mse">MSE</option>
-                <option value="crossentropy">Cross-Entropy</option>
               </select>
             </label>
             <label className="config-label">
-              <span className="label-text">Steps:</span>
+              <span
+                className="label-text clickable-label"
+                onClick={(e) => {
+                  if (openConceptDialog) {
+                    e.stopPropagation();
+                    openConceptDialog('step');
+                  }
+                }}
+                title="Click to learn about Training Steps"
+              >
+                Steps:
+              </span>
               <input
                 type="number"
                 value={pendingSteps}
@@ -164,7 +207,18 @@ export default function GroupNode({ data, selected }) {
               />
             </label>
             <label className="config-label">
-              <span className="label-text">LR:</span>
+              <span
+                className="label-text clickable-label"
+                onClick={(e) => {
+                  if (openConceptDialog) {
+                    e.stopPropagation();
+                    openConceptDialog('learning-rate');
+                  }
+                }}
+                title="Click to learn about Learning Rate"
+              >
+                LR:
+              </span>
               <input
                 type="number"
                 value={pendingLearningRate}
@@ -178,7 +232,18 @@ export default function GroupNode({ data, selected }) {
               />
             </label>
             <label className="config-label">
-              <span className="label-text">Method:</span>
+              <span
+                className="label-text clickable-label"
+                onClick={(e) => {
+                  if (openConceptDialog) {
+                    e.stopPropagation();
+                    openConceptDialog('method');
+                  }
+                }}
+                title="Click to learn about Training Methods"
+              >
+                Method:
+              </span>
               <select
                 value={pendingMethod}
                 onChange={(e) => setPendingMethod(e.target.value)}
@@ -186,9 +251,8 @@ export default function GroupNode({ data, selected }) {
                 onPointerDown={(e) => e.stopPropagation()}
                 className="config-select nodrag"
               >
-                <option value="backpropagation">BP</option>
-                <option value="sgd">SGD</option>
-                <option value="adam">Adam</option>
+                <option value="backpropagation">Backpropagation</option>
+                <option value="finite-difference">Finite Difference</option>
               </select>
             </label>
             <button

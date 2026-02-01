@@ -4,7 +4,7 @@ import { resolveCollisions } from '../../utils/collisionDetection';
 import './NodeStyles.css';
 
 export default function PredictionNode({ data, selected }) {
-  const { input = [], output = null, onUpdateInput, onPredict, isTrained = false } = data;
+  const { input = [], output = null, onUpdateInput, onPredict, isTrained = false, openConceptDialog } = data;
   const prevInputRef = useRef(input);
   const isPredictingRef = useRef(false);
   const { setNodes } = useReactFlow();
@@ -58,7 +58,19 @@ export default function PredictionNode({ data, selected }) {
         onResizeEnd={handleResizeEnd}
       />
       <Handle type="target" position={Position.Left} id="input" />
-      <div className="node-header">Prediction</div>
+      <div
+        className="node-header clickable-header"
+        onClick={(e) => {
+          if (openConceptDialog) {
+            e.stopPropagation();
+            openConceptDialog('prediction');
+          }
+        }}
+        title="Click to learn about Prediction"
+        style={{ cursor: openConceptDialog ? 'pointer' : 'default' }}
+      >
+        Prediction
+      </div>
       <div className="node-content">
         {!isTrained && (
           <div className="warning-message">

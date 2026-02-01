@@ -26,6 +26,7 @@ export default function NeuralNetworkNode({ data, selected }) {
     config = {},
     trainingConfig = {},
     onTrain,
+    openConceptDialog,
   } = data;
 
   const [isRunning, setIsRunning] = useState(false);
@@ -91,7 +92,18 @@ export default function NeuralNetworkNode({ data, selected }) {
         onResizeEnd={handleResizeEnd}
       />
       <Handle type="target" position={Position.Left} />
-      <div className="node-header">Neural Network</div>
+      <div
+        className="node-header clickable-header"
+        onClick={(e) => {
+          if (openConceptDialog) {
+            e.stopPropagation();
+            openConceptDialog('neural-network');
+          }
+        }}
+        title="Click to learn about Neural Networks"
+      >
+        Neural Network
+      </div>
       <div className="node-content">
         <div className="cube-container" onClick={onToggle}>
           <Cube3D onClick={onToggle} isExpanded={isExpanded} />

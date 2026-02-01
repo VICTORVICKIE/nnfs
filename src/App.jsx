@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import './App.css';
+import ConceptDialog from './components/ConceptDialog';
 import WeightEdge from './components/edges/WeightEdge';
 import FlowCanvas from './components/FlowCanvas';
 import BiasNode from './components/nodes/BiasNode';
@@ -50,6 +51,8 @@ const edgeTypes = {
 };
 
 function App() {
+  const [currentConcept, setCurrentConcept] = useState(null);
+
   // Get config from Zustand store
   const config = useNeuralNetworkStore(selectConfig);
   const trainingConfig = useNeuralNetworkStore(selectTrainingConfig);
@@ -281,6 +284,7 @@ function App() {
               ...baseData,
               x: flowState.trainingData.x,
               y: flowState.trainingData.y,
+              openConceptDialog: setCurrentConcept,
             }
           };
 
@@ -301,6 +305,7 @@ function App() {
                 onNetworkConfigChange: handleConfigUpdate,
                 onTrainingConfigChange: handleTrainingConfigUpdate,
                 onTrain: handleTrain,
+                openConceptDialog: setCurrentConcept,
               }
             };
           }
@@ -314,6 +319,7 @@ function App() {
               config: config,
               trainingConfig: trainingConfig,
               onTrain: handleTrain,
+              openConceptDialog: setCurrentConcept,
             }
           };
 
@@ -327,6 +333,7 @@ function App() {
               onUpdateInput: flowState.updatePredictionInput,
               onPredict: handlePredict,
               isTrained: isTrained,
+              openConceptDialog: setCurrentConcept,
             }
           };
 
@@ -336,6 +343,7 @@ function App() {
             ...node,
             data: {
               ...baseData,
+              openConceptDialog: setCurrentConcept,
             }
           };
 
@@ -345,6 +353,7 @@ function App() {
             ...node,
             data: {
               ...baseData,
+              onHeaderClick: () => setCurrentConcept('training-progress')
             }
           };
 
@@ -454,27 +463,39 @@ function App() {
   const edges = useMemo(() => flowState.edges, [flowState.edges]);
 
   return (
-    <div className="app">
-      <div className="app-header">
-        <div className="header-left">
-          <h1>Neural Network From Scratch</h1>
-          <p>Visualization by Vignesh Kumar S</p>
+    <>
+      <div className="app">
+        <div className="app-header">
+          <div className="header-left">
+            <img src="logo.png" alt="Logo" className="app-logo" />
+            <div>
+              <h1>Neural Network From Scratch</h1>
+              <p>Visualization by Vignesh Kumar S</p>
+            </div>
+          </div>
+          <div className="header-right">
+            <p>
+              Reference: <a href="https://www.youtube.com/playlist?list=PLpM-Dvs8t0VZPZKggcql-MmjaBdZKeDMw" target="_blank" rel="noopener noreferrer">Neural Networks from Scratch</a>
+            </p>
+            <p>Tsoding</p>
+          </div>
         </div>
-        <div className="header-right">
-          <p>
-            Reference: <a href="https://www.youtube.com/playlist?list=PLpM-Dvs8t0VZPZKggcql-MmjaBdZKeDMw" target="_blank" rel="noopener noreferrer">Neural Networks from Scratch</a>
-          </p>
-          <p>Tsoding</p>
-        </div>
+        <FlowCanvas
+          nodes={nodesWithData}
+          edges={edges}
+          nodeTypes={nodeTypes}
+          edgeTypes={edgeTypes}
+          isExpanded={flowState.isExpanded}
+        />
       </div>
-      <FlowCanvas
-        nodes={nodesWithData}
-        edges={edges}
-        nodeTypes={nodeTypes}
-        edgeTypes={edgeTypes}
-        isExpanded={flowState.isExpanded}
-      />
-    </div>
+
+      {currentConcept && (
+        <ConceptDialog
+          conceptKey={currentConcept}
+          onClose={() => setCurrentConcept(null)}
+        />
+      )}
+    </>
   );
 }
 

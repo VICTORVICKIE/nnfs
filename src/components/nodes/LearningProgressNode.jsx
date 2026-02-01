@@ -11,6 +11,7 @@ export default function LearningProgressNode({ data, selected }) {
     const networkRef = useNeuralNetworkStore(selectNetworkRef);
     const parameters = useNeuralNetworkStore(selectParameters); // Subscribe to parameter updates during training
     const { setNodes } = useReactFlow();
+    const onHeaderClick = data?.onHeaderClick;
 
     const handleResizeEnd = () => {
         setNodes((nds) =>
@@ -41,7 +42,7 @@ export default function LearningProgressNode({ data, selected }) {
     // Combine the data for charting
     const chartData = trainingInputs.map((input, idx) => ({
         index: idx,
-        input: Array.isArray(input) ? input[0] : input, // Use first input for x-axis if multi-dimensional
+        input: Array.isArray(input) ? input.join(', ') : input, // Format array as comma-separated string
         actual: actualValues[idx],
         predicted: predictedValues[idx] !== undefined ? predictedValues[idx] : null
     }));
@@ -56,8 +57,15 @@ export default function LearningProgressNode({ data, selected }) {
                 onResizeEnd={handleResizeEnd}
             />
             <Handle type="target" position={Position.Top} id="input" />
-            <div className="node-header">
-                <span>Learning Progress</span>
+            <div
+                className="node-header clickable-header"
+                onClick={(e) => {
+                    e.stopPropagation();
+                    onHeaderClick?.();
+                }}
+                style={{ cursor: 'pointer' }}
+            >
+                Learning Progress
             </div>
             <div className="node-content">
                 <div className="chart-container">

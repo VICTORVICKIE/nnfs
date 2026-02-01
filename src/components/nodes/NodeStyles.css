@@ -678,3 +678,44 @@
 .code-snippet-node .code-content::-webkit-scrollbar-thumb:hover {
   background: #555;
 }
+
+/* Clickable headers and labels for concept dialogs */
+.clickable-header {
+  cursor: pointer;
+  transition: color 0.2s ease;
+  user-select: none;
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-underline-offset: 3px;
+}
+
+.clickable-header:hover {
+  color: #f59e0b;
+}
+
+.clickable-label {
+  cursor: pointer;
+  transition: color 0.2s ease;
+  user-select: none;
+  display: inline-block;
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-underline-offset: 2px;
+}
+
+.clickable-label:hover {
+  color: #f59e0b;
+}
+
+.node-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.group-title {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+}

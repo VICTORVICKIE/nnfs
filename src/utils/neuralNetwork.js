@@ -35,11 +35,9 @@ export class NeuralNetwork {
       case 'relu':
         return Math.max(0, x);
       case 'sigmoid':
-        return 1 / (1 + Math.exp(-x));
-      case 'tanh':
-        return Math.tanh(x);
       default:
-        return x;
+        // Sigmoid activation: σ(x) = 1 / (1 + e^(-x))
+        return 1 / (1 + Math.exp(-x));
     }
   }
 
@@ -48,27 +46,18 @@ export class NeuralNetwork {
       case 'relu':
         return x > 0 ? 1 : 0;
       case 'sigmoid':
+      default:
+        // Sigmoid derivative: σ'(x) = σ(x)(1 - σ(x))
         const s = 1 / (1 + Math.exp(-x));
         return s * (1 - s);
-      case 'tanh':
-        return 1 - Math.tanh(x) ** 2;
-      default:
-        return 1;
     }
   }
 
   // Cost functions (for a single output value)
   cost(y, yPred) {
-    switch (this.costFunction) {
-      case 'mse':
-        return (y - yPred) ** 2;
-      case 'crossentropy':
-        const eps = 1e-15;
-        yPred = Math.max(eps, Math.min(1 - eps, yPred));
-        return -(y * Math.log(yPred) + (1 - y) * Math.log(1 - yPred));
-      default:
-        return (y - yPred) ** 2;
-    }
+    // Mean Squared Error: C = (y - ŷ)^2
+    // Following tsoding/ml-notes approach
+    return (y - yPred) ** 2;
   }
 
   // Cost for an entire sample (all outputs)
@@ -81,16 +70,9 @@ export class NeuralNetwork {
   }
 
   costDerivative(y, yPred) {
-    switch (this.costFunction) {
-      case 'mse':
-        return 2 * (yPred - y);
-      case 'crossentropy':
-        const eps = 1e-15;
-        yPred = Math.max(eps, Math.min(1 - eps, yPred));
-        return (yPred - y) / (yPred * (1 - yPred));
-      default:
-        return 2 * (yPred - y);
-    }
+    // MSE derivative: ∂C/∂ŷ = 2(ŷ - y)
+    // Following tsoding/ml-notes approach
+    return 2 * (yPred - y);
   }
 
   // Forward pass
@@ -252,8 +234,11 @@ export class NeuralNetwork {
         let sampleGradients;
         if (method === 'backpropagation') {
           sampleGradients = this.backward(xSample, ySample, yPred, activations, zs);
-        } else {
+        } else if (method === 'finite-difference') {
           sampleGradients = this.finiteDifferenceGradient(xSample, ySample);
+        } else {
+          // Default to backpropagation if method is unrecognized
+          sampleGradients = this.backward(xSample, ySample, yPred, activations, zs);
         }
         
         // Accumulate gradients
