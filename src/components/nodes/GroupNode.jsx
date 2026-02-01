@@ -1,5 +1,5 @@
 import { Handle, NodeResizer, Position } from '@xyflow/react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import './NodeStyles.css';
 
 // Custom group node component for neural network group
@@ -24,7 +24,7 @@ export default function GroupNode({ data, selected }) {
   const [localLoss, setLocalLoss] = useState(null);
 
   // Extract config values with defaults
-  const layers = config.layers || [2, 4, 1];
+  const hiddenLayers = config.hiddenLayers || [4];
   const activation = config.activation || 'relu';
   const costFunction = config.costFunction || 'mse';
   const steps = trainingConfig.steps || 100;
@@ -32,19 +32,24 @@ export default function GroupNode({ data, selected }) {
   const method = trainingConfig.method || 'backpropagation';
 
   // Local state for pending configuration changes
-  const [pendingLayers, setPendingLayers] = useState(layers.join(', '));
+  const [pendingHiddenLayers, setPendingHiddenLayers] = useState(hiddenLayers.join(', '));
   const [pendingActivation, setPendingActivation] = useState(activation);
   const [pendingCostFunction, setPendingCostFunction] = useState(costFunction);
   const [pendingSteps, setPendingSteps] = useState(steps);
   const [pendingLearningRate, setPendingLearningRate] = useState(learningRate);
   const [pendingMethod, setPendingMethod] = useState(method);
 
+  // Sync pending hidden layers when config changes
+  useEffect(() => {
+    setPendingHiddenLayers(hiddenLayers.join(', '));
+  }, [hiddenLayers.join(', ')]);
+
   // Configuration change handlers (now just update local state)
   const handleSaveConfig = (e) => {
     e.stopPropagation();
 
-    const newLayers = pendingLayers.split(',').map(v => parseInt(v.trim()) || 1).filter(v => v > 0);
-    onNetworkConfigChange?.({ layers: newLayers, activation: pendingActivation, costFunction: pendingCostFunction });
+    const newHiddenLayers = pendingHiddenLayers.split(',').map(v => parseInt(v.trim()) || 1).filter(v => v > 0);
+    onNetworkConfigChange?.({ hiddenLayers: newHiddenLayers, activation: pendingActivation, costFunction: pendingCostFunction });
     onTrainingConfigChange?.({ steps: pendingSteps, learningRate: pendingLearningRate, method: pendingMethod });
   };
 
@@ -98,15 +103,16 @@ export default function GroupNode({ data, selected }) {
         <div className="config-panel">
           <div className="config-row">
             <label className="config-label">
-              <span className="label-text">Layers:</span>
+              <span className="label-text">Hidden Layers:</span>
               <input
                 type="text"
-                value={pendingLayers}
-                onChange={(e) => setPendingLayers(e.target.value)}
+                value={pendingHiddenLayers}
+                onChange={(e) => setPendingHiddenLayers(e.target.value)}
                 onMouseDown={(e) => e.stopPropagation()}
                 onPointerDown={(e) => e.stopPropagation()}
                 className="config-input nodrag"
-                placeholder="2, 4, 1"
+                placeholder="4, 4" 
+                title="Input/output sizes auto-detected from training data"
               />
             </label>
             <label className="config-label">

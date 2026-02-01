@@ -230,16 +230,6 @@ export class NeuralNetwork {
   async train(x, y, steps, learningRate, method = 'backpropagation', onStep = null) {
     const history = [];
     
-    console.log('[NeuralNetwork.train] Starting training:', {
-      samples: x.length,
-      inputShape: x[0]?.length,
-      outputShape: y[0]?.length,
-      steps,
-      learningRate,
-      method,
-      architecture: this.layers
-    });
-    
     for (let step = 0; step < steps; step++) {
       let totalLoss = 0;
       let gradients = {
@@ -257,18 +247,6 @@ export class NeuralNetwork {
         // Calculate loss for all outputs
         const loss = this.sampleCost(ySample, yPred);
         totalLoss += loss;
-        
-        // Log first sample details on specific steps
-        if (sample === 0 && (step === 0 || step === 10 || step % 50 === 0)) {
-          console.log(`[NeuralNetwork] Step ${step}, Sample ${sample}:`, {
-            input: xSample,
-            expected: ySample,
-            predicted: yPred.map(v => v.toFixed(4)),
-            loss: loss.toFixed(6),
-            activations: activations.map(a => a.map(v => v.toFixed(4))),
-            zs: zs.map(z => z.map(v => v.toFixed(4)))
-          });
-        }
         
         // Compute gradients for this sample
         let sampleGradients;
@@ -297,15 +275,6 @@ export class NeuralNetwork {
             gradients.weights[layer][i][j] /= x.length;
           }
         }
-      }
-      
-      // Log gradients on key steps
-      if (step === 0 || step === 10 || step % 50 === 0) {
-        console.log(`[NeuralNetwork] Step ${step} Gradients:`, {
-          weights: gradients.weights.map(w => w.map(row => row.map(v => v.toFixed(6)))),
-          biases: gradients.biases.map(b => b.map(v => v.toFixed(6))),
-          learningRate
-        });
       }
       
       // Update parameters

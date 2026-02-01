@@ -1,10 +1,17 @@
 import { useCallback, useMemo, useState } from 'react';
 
-export function useFlowState(config = { layers: [1, 3, 1] }) {
+export function useFlowState(config = { hiddenLayers: [3] }) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [trainingData, setTrainingData] = useState({ x: [[1], [2], [3], [4], [5]], y: [[2], [4], [6], [8], [10]] });
   const [predictionInput, setPredictionInput] = useState([7]);
   const [predictionOutput, setPredictionOutput] = useState(null);
+
+  // Build full layers from hidden layers + default input/output for visualization
+  const getFullLayers = useCallback(() => {
+    const hiddenLayers = config.hiddenLayers || [3];
+    // Default to 1 input, 1 output for visualization (will be corrected during training)
+    return [1, ...hiddenLayers, 1];
+  }, [config.hiddenLayers]);
 
   const toggleExpanded = useCallback(() => {
     setIsExpanded(prev => !prev);
@@ -131,11 +138,12 @@ export function useFlowState(config = { layers: [1, 3, 1] }) {
   const expandedNodes = useMemo(() => {
     if (!isExpanded) return [];
 
-    const { nodes: neuronNodes } = generateNeuronNodesAndEdges(config.layers);
+    const fullLayers = getFullLayers();
+    const { nodes: neuronNodes } = generateNeuronNodesAndEdges(fullLayers);
 
     // Calculate neurons group size based on actual content
-    const maxLayerSize = Math.max(...config.layers);
-    const numLayers = config.layers.length;
+    const maxLayerSize = Math.max(...fullLayers);
+    const numLayers = fullLayers.length;
     const neuronsPadding = 60; // Increased padding for better spacing
     const neuronsGroupWidth = 50 + (numLayers - 1) * 280 + 60 + neuronsPadding * 2;
     const neuronsGroupHeight = 50 + maxLayerSize * 100 + neuronsPadding * 2;
@@ -163,7 +171,7 @@ export function useFlowState(config = { layers: [1, 3, 1] }) {
     ];
 
     return childNodes;
-  }, [isExpanded, config.layers, generateNeuronNodesAndEdges]);
+  }, [isExpanded, getFullLayers, generateNeuronNodesAndEdges]);
 
   // Calculate group size based on child nodes' bounding box
   // This will auto-adjust when child nodes are resized or moved
@@ -214,7 +222,7 @@ export function useFlowState(config = { layers: [1, 3, 1] }) {
     {
       id: 'training-data',
       type: 'trainingData',
-      position: { x: 50, y: isExpanded ? 80 : 150 },
+      position: { x: -200, y: isExpanded ? 80 : 150 },
       data: {
         x: trainingData.x,
         y: trainingData.y,
@@ -317,7 +325,8 @@ export function useFlowState(config = { layers: [1, 3, 1] }) {
 
   // Expanded view edges
   const expandedEdges = useMemo(() => {
-    const { edges: neuronEdges } = generateNeuronNodesAndEdges(config.layers);
+    const fullLayers = getFullLayers();
+    const { edges: neuronEdges } = generateNeuronNodesAndEdges(fullLayers);
 
     const edges = [
       {
@@ -356,7 +365,7 @@ export function useFlowState(config = { layers: [1, 3, 1] }) {
     ];
 
     return edges;
-  }, [config.layers, generateNeuronNodesAndEdges]);
+  }, [getFullLayers, generateNeuronNodesAndEdges]);
 
   // Get current nodes and edges based on expanded state
   const nodes = useMemo(() => {

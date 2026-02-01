@@ -1,11 +1,11 @@
 import { Handle, NodeResizer, Position } from '@xyflow/react';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import './NodeStyles.css';
 
 export default function PredictionNode({ data, selected }) {
   const { input = [], output = null, onUpdateInput, onPredict, isTrained = false } = data;
-
-  console.log('[PredictionNode] Rendering with isTrained:', isTrained, 'data:', data);
+  const prevInputRef = useRef(input);
+  const isPredictingRef = useRef(false);
 
   const handleInputChange = (e) => {
     onUpdateInput?.(e.target.value);
@@ -13,10 +13,28 @@ export default function PredictionNode({ data, selected }) {
 
   // Auto-predict when trained and input changes
   useEffect(() => {
-    if (isTrained && onPredict) {
-      onPredict();
+    // Prevent concurrent predictions
+    if (isPredictingRef.current) {
+      return;
     }
-  }, [isTrained, input, onPredict]);
+
+    const inputChanged = JSON.stringify(prevInputRef.current) !== JSON.stringify(input);
+
+    if (isTrained && onPredict && inputChanged) {
+      prevInputRef.current = input;
+      isPredictingRef.current = true;
+      
+      // Call predict and reset flag after
+      try {
+        onPredict();
+      } finally {
+        // Reset flag after a short delay to allow state updates
+        setTimeout(() => {
+          isPredictingRef.current = false;
+        }, 100);
+      }
+    }
+  }, [isTrained, input, onPredict, output]);
 
   return (
     <div className={`custom-node prediction-node ${!isTrained ? 'not-trained' : ''}`}>

@@ -10,8 +10,6 @@ export default function LearningProgressNode({ data, selected }) {
     const networkRef = useNeuralNetworkStore(selectNetworkRef);
     const parameters = useNeuralNetworkStore(selectParameters); // Subscribe to parameter updates during training
 
-    console.log('[LearningProgressNode] Rendering, parameters:', parameters ? 'exist' : 'null');
-
     // Compute predictions for training data to show actual vs predicted
     let predictedValues = [];
     // Show predictions when we have a network (trained or training)

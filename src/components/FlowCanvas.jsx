@@ -10,6 +10,7 @@ import {
 import '@xyflow/react/dist/style.css';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import './FlowCanvas.css';
+import { resolveCollisions } from '../utils/collisionDetection';
 
 // Component that runs inside ReactFlow context to calculate group size
 function GroupSizeCalculator({ nodes, setNodes, isExpanded }) {
@@ -23,7 +24,7 @@ function GroupSizeCalculator({ nodes, setNodes, isExpanded }) {
       setTimeout(() => {
         fitView({ padding: 0.2, duration: 400 });
         hasFitOnMount.current = true;
-      }, 100);
+      }, 500);
     }
   }, [nodes.length, fitView]);
 
@@ -170,14 +171,38 @@ export default function FlowCanvas({ nodes: initialNodes, edges: initialEdges, n
     [setEdges]
   );
 
+  // Handle collision detection after dragging
+  const onNodeDragStop = useCallback(() => {
+    setNodes((nds) =>
+      resolveCollisions(nds, {
+        maxIterations: 50,
+        overlapThreshold: 0.5,
+        margin: 15,
+      })
+    );
+  }, [setNodes]);
+
   // Only sync nodes on STRUCTURAL changes (expand/collapse), not data updates
   // This prevents resetting user-modified positions/sizes during training
   const prevIsExpandedRef = useRef(isExpanded);
+  const prevNodeIdsRef = useRef(new Set());
 
   useEffect(() => {
-    // Only reset nodes when expand/collapse state changes
-    if (prevIsExpandedRef.current !== isExpanded) {
+    const prevNodeIds = prevNodeIdsRef.current;
+    const newNodeIds = new Set(initialNodes.map(n => n.id));
+    
+    // Check if node structure changed (different IDs or count)
+    const structureChanged = 
+      prevNodeIds.size !== newNodeIds.size ||
+      ![...prevNodeIds].every(id => newNodeIds.has(id)) ||
+      ![...newNodeIds].every(id => prevNodeIds.has(id));
+
+    // Reset nodes when:
+    // 1. Expand/collapse state changes
+    // 2. Node structure changes (layers config changed, nodes added/removed)
+    if (prevIsExpandedRef.current !== isExpanded || structureChanged) {
       prevIsExpandedRef.current = isExpanded;
+      prevNodeIdsRef.current = newNodeIds;
       setNodes(initialNodes);
     } else {
       // Update only node data without changing positions/dimensions
@@ -209,6 +234,7 @@ export default function FlowCanvas({ nodes: initialNodes, edges: initialEdges, n
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
+        onNodeDragStop={onNodeDragStop}
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
         nodesDraggable={true}

@@ -14,14 +14,14 @@ export const useNeuralNetworkStore = create((set, get) => ({
   
   // Network configuration
   config: {
-    layers: [1, 3, 1],
+    hiddenLayers: [1],  // Only hidden layers, input/output derived from data
     activation: 'relu',
     costFunction: 'mse',
   },
   
   // Training configuration
   trainingConfig: {
-    steps: 100,
+    steps: 30,
     learningRate: 0.01,
     method: 'gradient-descent',
   },
@@ -53,11 +53,11 @@ export const useNeuralNetworkStore = create((set, get) => ({
   
   resetTrainingHistory: () => set({ trainingHistory: [] }),
   
-  updateConfig: (config) => set({
-    config,
+  updateConfig: (config) => set((state) => ({
+    config: { ...state.config, ...config },
     isTrained: false,
     trainingHistory: [],
-  }),
+  })),
   
   updateTrainingConfig: (trainingConfig) => set({ trainingConfig }),
   

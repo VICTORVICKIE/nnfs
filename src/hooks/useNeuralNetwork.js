@@ -31,23 +31,19 @@ export function useNeuralNetwork() {
   
   const networkRef = useRef(null);
 
-  // Initialize or update network when config changes
-  const initializeNetwork = useCallback(() => {
+  // Train the network
+  const train = useCallback(async (x, y, onStepCallback, fullLayers) => {
+    console.log('[train] Training started, will reinitialize network');
+    console.log('[train] Full layers architecture:', fullLayers);
+    // Always reinitialize network to reset weights to random values
     const nn = new NeuralNetwork(
-      config.layers,
+      fullLayers,
       config.activation,
       config.costFunction
     );
     networkRef.current = nn;
     setNetworkRef(nn);
     setIsTrained(false);
-  }, [config, setNetworkRef, setIsTrained]);
-
-  // Train the network
-  const train = useCallback(async (x, y, onStepCallback) => {
-    if (!networkRef.current) {
-      initializeNetwork();
-    }
     
     setIsTraining(true);
     setCurrentStep(0);
@@ -68,16 +64,6 @@ export function useNeuralNetwork() {
           const now = Date.now();
           // Throttle UI updates to prevent excessive re-renders
           if (now - lastUpdateTime >= updateInterval || step === 0 || step === trainingConfig.steps - 1) {
-            // Log every 10th step or first/last step
-            if (step % 10 === 0 || step === 0 || step === trainingConfig.steps - 1) {
-              console.log(`[Training] Step ${step}:`, {
-                loss: loss.toFixed(6),
-                weights: parameters.weights?.map(w => 
-                  w?.map(row => row?.map(v => v?.toFixed(3)))
-                ),
-                biases: parameters.biases?.map(b => b?.map(v => v?.toFixed(3)))
-              });
-            }
             setCurrentStep(step);
             addTrainingHistory(step, loss);
             updateParameters(parameters);
@@ -103,7 +89,9 @@ export function useNeuralNetwork() {
     } finally {
       setIsTraining(false);
     }
-  }, [trainingConfig.steps, trainingConfig.learningRate, trainingConfig.method, initializeNetwork, setIsTraining, setCurrentStep, resetTrainingHistory, addTrainingHistory, updateParameters, setIsTrained]);
+  }, [trainingConfig.steps, trainingConfig.learningRate, trainingConfig.method, 
+    config.activation, config.costFunction, setIsTraining, setCurrentStep, resetTrainingHistory, 
+    addTrainingHistory, updateParameters, setIsTrained, setNetworkRef]);
 
   // Predict using trained network
   const predict = useCallback((x) => {
@@ -121,25 +109,10 @@ export function useNeuralNetwork() {
     return networkRef.current.getParameters();
   }, []);
 
-  // Initialize on mount
-  useEffect(() => {
-    if (!networkRef.current) {
-      initializeNetwork();
-    }
-  }, [initializeNetwork]);
-
-  // Re-initialize when config changes
-  useEffect(() => {
-    if (networkRef.current) {
-      initializeNetwork();
-    }
-  }, [config.layers, config.activation, config.costFunction, initializeNetwork]);
-
   return {
     train,
     predict,
     getParameters,
-    initializeNetwork,
     updateConfig,
     updateTrainingConfig,
   };

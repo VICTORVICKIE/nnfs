@@ -1,15 +1,13 @@
 import { Handle, NodeResizer, Position } from '@xyflow/react';
 import { useState } from 'react';
 import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
-import { selectTrainingHistory, selectCurrentStep, useNeuralNetworkStore } from '../../stores/neuralNetworkStore';
+import { selectCurrentStep, selectTrainingHistory, useNeuralNetworkStore } from '../../stores/neuralNetworkStore';
 import './NodeStyles.css';
 
 export default function TrainingProgressNode({ data, selected }) {
   // Use Zustand selector - only re-renders when training history changes
   const history = useNeuralNetworkStore(selectTrainingHistory);
   const currentStep = useNeuralNetworkStore(selectCurrentStep); // Subscribe for real-time updates
-
-  console.log('[TrainingProgressNode] Rendering, history length:', history.length, 'currentStep:', currentStep);
 
   const chartData = history.map(({ step, loss }) => ({
     step,

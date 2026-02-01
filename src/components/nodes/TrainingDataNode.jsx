@@ -42,7 +42,6 @@ export default function TrainingDataNode({ data, selected }) {
 
     // Save to Zustand store
     updateTrainingData({ x: parsedX, y: parsedY });
-    alert(`Training data saved! ${parsedX.length} samples ready.`);
   };
 
   const addSample = () => {

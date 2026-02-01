@@ -55,8 +55,6 @@ function App() {
   const isTrained = useNeuralNetworkStore(selectIsTrained);
   const parameters = useNeuralNetworkStore(selectParameters);
 
-  console.log('[App.jsx] isTrained:', isTrained);
-
   // Use neural network hook (syncs with Zustand internally)
   const nnState = useNeuralNetwork();
   const flowState = useFlowState(config);
@@ -117,9 +115,6 @@ function App() {
     // Read latest training data directly from Zustand store
     const { x, y } = useNeuralNetworkStore.getState().trainingData;
 
-    console.log('[handleTrain] Starting training with data:', { x, y });
-    console.log('[handleTrain] Data types:', { xType: typeof x, yType: typeof y, xIsArray: Array.isArray(x), yIsArray: Array.isArray(y) });
-
     // Validate training data exists
     if (!x || !y || !Array.isArray(x) || !Array.isArray(y)) {
       alert('Invalid training data: x and y must be arrays');
@@ -151,8 +146,6 @@ function App() {
     const parsedX = x.map(parseInput).filter(arr => arr.length > 0);
     const parsedY = y.map(parseInput).filter(arr => arr.length > 0);
 
-    console.log('[handleTrain] Parsed training data:', { parsedX, parsedY });
-
     if (parsedX.length === 0 || parsedY.length === 0) {
       alert('Training data is empty after parsing. Please check your input values.');
       return;
@@ -178,37 +171,21 @@ function App() {
     // Auto-detect input and output dimensions from data
     const actualInputSize = parsedX[0].length;
     const actualOutputSize = parsedY[0].length;
-    const currentLayers = config.layers;
+    const hiddenLayers = config.hiddenLayers || [];
 
-    console.log('[handleTrain] Network dimensions:', {
-      actualInputSize,
-      actualOutputSize,
-      currentLayers,
-      learningRate: trainingConfig.learningRate,
-      steps: trainingConfig.steps
-    });
+    // Build full architecture: input + hidden + output
+    const fullLayers = [actualInputSize, ...hiddenLayers, actualOutputSize];
 
-    // Auto-adjust network architecture if dimensions don't match
-    if (currentLayers[0] !== actualInputSize || currentLayers[currentLayers.length - 1] !== actualOutputSize) {
-      // Keep middle layers, just adjust input/output
-      const newLayers = [actualInputSize, ...currentLayers.slice(1, -1), actualOutputSize];
-
-      // If no middle layers, add a default hidden layer
-      if (newLayers.length === 2) {
-        const hiddenSize = Math.max(4, Math.ceil((actualInputSize + actualOutputSize) / 2));
-        newLayers.splice(1, 0, hiddenSize);
-      }
-
-      console.log(`Auto-adjusting network: ${currentLayers.join('->')} → ${newLayers.join('->')}`);
-      nnState.updateConfig({ layers: newLayers });
-
-      // Need to wait a tick for the config to update
-      await new Promise(resolve => setTimeout(resolve, 0));
-    }
-
-    console.log('[handleTrain] Starting training with final config:', config);
-    await nnState.train(parsedX, parsedY, onStep);
-  }, [nnState]);
+    console.log('[handleTrain] Building network architecture:');
+    console.log('[handleTrain]   Input size:', actualInputSize, '(from training data)');
+    console.log('[handleTrain]   Hidden layers:', hiddenLayers);
+    console.log('[handleTrain]   Output size:', actualOutputSize, '(from training data)');
+    console.log('[handleTrain]   Full architecture:', fullLayers);
+    console.log('[handleTrain]   Activation:', config.activation);
+    console.log('[handleTrain]   Cost function:', config.costFunction);
+    
+    await nnState.train(parsedX, parsedY, onStep, fullLayers);
+  }, [nnState, config]);
 
   // Update prediction when forward pass completes or input changes
   useEffect(() => {
@@ -273,7 +250,7 @@ function App() {
   );
   const configSignature = useMemo(() =>
     JSON.stringify(config),
-    [config.layers, config.activation, config.costFunction]
+    [config.hiddenLayers, config.activation, config.costFunction]
   );
   const trainingConfigSignature = useMemo(() =>
     JSON.stringify(trainingConfig),
@@ -412,7 +389,7 @@ function App() {
                 layerIndex,
                 neuronIndex,
                 isInput: layerIndex === 0,
-                isOutput: layerIndex === config.layers.length - 1,
+                isOutput: layerIndex === (config.hiddenLayers || []).length + 1,
               }
             };
           }
@@ -425,8 +402,8 @@ function App() {
                 ...baseData,
                 layerIndex,
                 weights: parameters?.weights?.[layerIndex] || [],
-                fromSize: config.layers[layerIndex],
-                toSize: config.layers[layerIndex + 1],
+                fromSize: 1,  // Will be determined at training time
+                toSize: 1,
               }
             };
           }
@@ -438,7 +415,7 @@ function App() {
                 ...baseData,
                 layerIndex,
                 biases: parameters?.biases?.[layerIndex] || [],
-                size: config.layers[layerIndex + 1],
+                size: 1,  // Will be determined at training time
               }
             };
           }
