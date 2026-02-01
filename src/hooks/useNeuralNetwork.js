@@ -6,6 +6,8 @@ import {
   selectSetCurrentStep,
   selectSetIsTrained,
   selectSetIsTraining,
+  selectSetAbortTraining,
+  selectAbortTraining,
   selectSetNetworkRef,
   selectTrainingConfig,
   selectUpdateConfig,
@@ -20,6 +22,8 @@ export function useNeuralNetwork() {
   const config = useNeuralNetworkStore(selectConfig);
   const trainingConfig = useNeuralNetworkStore(selectTrainingConfig);
   const setIsTraining = useNeuralNetworkStore(selectSetIsTraining);
+  const setAbortTraining = useNeuralNetworkStore(selectSetAbortTraining);
+  const abortTraining = useNeuralNetworkStore(selectAbortTraining);
   const setIsTrained = useNeuralNetworkStore(selectSetIsTrained);
   const setCurrentStep = useNeuralNetworkStore(selectSetCurrentStep);
   const addTrainingHistory = useNeuralNetworkStore(selectAddTrainingHistory);
@@ -46,6 +50,7 @@ export function useNeuralNetwork() {
     setIsTrained(false);
     
     setIsTraining(true);
+    setAbortTraining(false); // Reset abort flag
     setCurrentStep(0);
     resetTrainingHistory();
 
@@ -61,6 +66,11 @@ export function useNeuralNetwork() {
         trainingConfig.learningRate,
         trainingConfig.method,
         async (step, loss, parameters) => {
+          // Check if training was aborted
+          if (useNeuralNetworkStore.getState().abortTraining) {
+            throw new Error('Training cancelled by user');
+          }
+          
           const now = Date.now();
           // Throttle UI updates to prevent excessive re-renders
           if (now - lastUpdateTime >= updateInterval || step === 0 || step === trainingConfig.steps - 1) {
@@ -84,14 +94,24 @@ export function useNeuralNetwork() {
       updateParameters(networkRef.current.getParameters());
       return history;
     } catch (error) {
+      if (error.message === 'Training cancelled by user') {
+        console.log('Training was cancelled');
+        return null;
+      }
       console.error('Training error:', error);
       throw error;
     } finally {
       setIsTraining(false);
+      setAbortTraining(false); // Reset abort flag
     }
   }, [trainingConfig.steps, trainingConfig.learningRate, trainingConfig.method, 
-    config.activation, config.costFunction, setIsTraining, setCurrentStep, resetTrainingHistory, 
+    config.activation, config.costFunction, setIsTraining, setAbortTraining, setCurrentStep, resetTrainingHistory, 
     addTrainingHistory, updateParameters, setIsTrained, setNetworkRef]);
+
+  // Cancel training
+  const cancelTraining = useCallback(() => {
+    setAbortTraining(true);
+  }, [setAbortTraining]);
 
   // Predict using trained network
   const predict = useCallback((x) => {
@@ -111,6 +131,7 @@ export function useNeuralNetwork() {
 
   return {
     train,
+    cancelTraining,
     predict,
     getParameters,
     updateConfig,

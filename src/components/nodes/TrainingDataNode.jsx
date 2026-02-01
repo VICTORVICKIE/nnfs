@@ -1,4 +1,5 @@
 import { Handle, NodeResizer, Position, useReactFlow } from '@xyflow/react';
+import { Save } from 'lucide-react';
 import { useState } from 'react';
 import { useNeuralNetworkStore } from '../../stores/neuralNetworkStore';
 import { resolveCollisions } from '../../utils/collisionDetection';
@@ -11,6 +12,7 @@ const PRESET_DATASETS = {
     x: [[1], [2], [3], [4], [5]],
     y: [[2], [4], [6], [8], [10]],
     hiddenLayers: [1],
+    predictionDefault: [7],
     description: 'Custom dataset'
   },
   twice: {
@@ -18,6 +20,7 @@ const PRESET_DATASETS = {
     x: [[1], [2], [3], [4], [5], [6], [7], [8]],
     y: [[2], [4], [6], [8], [10], [12], [14], [16]],
     hiddenLayers: [1],
+    predictionDefault: [10],
     description: 'Linear function - multiply by 2'
   },
   xor: {
@@ -25,6 +28,7 @@ const PRESET_DATASETS = {
     x: [[0, 0], [0, 1], [1, 0], [1, 1]],
     y: [[0], [1], [1], [0]],
     hiddenLayers: [2],
+    predictionDefault: [1, 0],
     description: 'Non-linear XOR logic gate'
   },
   and: {
@@ -32,6 +36,7 @@ const PRESET_DATASETS = {
     x: [[0, 0], [0, 1], [1, 0], [1, 1]],
     y: [[0], [0], [0], [1]],
     hiddenLayers: [1],
+    predictionDefault: [1, 1],
     description: 'AND logic gate'
   },
   or: {
@@ -39,6 +44,7 @@ const PRESET_DATASETS = {
     x: [[0, 0], [0, 1], [1, 0], [1, 1]],
     y: [[0], [1], [1], [1]],
     hiddenLayers: [1],
+    predictionDefault: [0, 0],
     description: 'OR logic gate'
   },
   quadratic: {
@@ -46,6 +52,7 @@ const PRESET_DATASETS = {
     x: [[0], [1], [2], [3], [4], [5]],
     y: [[0], [1], [4], [9], [16], [25]],
     hiddenLayers: [4],
+    predictionDefault: [6],
     description: 'Quadratic function'
   },
   sine: {
@@ -53,6 +60,7 @@ const PRESET_DATASETS = {
     x: [[0], [0.5], [1], [1.5], [2], [2.5], [3]],
     y: [[0], [0.479], [0.841], [0.997], [0.909], [0.599], [0.141]],
     hiddenLayers: [6],
+    predictionDefault: [3.5],
     description: 'Sine wave approximation'
   },
   circle: {
@@ -64,6 +72,7 @@ const PRESET_DATASETS = {
     ],
     y: [[0], [0], [0], [0], [1], [0], [1], [0], [0]],
     hiddenLayers: [4],
+    predictionDefault: [0.5, 0.5],
     description: 'Classify points inside/outside circle'
   }
 };
@@ -109,6 +118,11 @@ export default function TrainingDataNode({ data, selected }) {
     const parsedX = x.map(parseValue).filter(arr => arr.length > 0);
     const parsedY = y.map(parseValue).filter(arr => arr.length > 0);
 
+    console.log('[TrainingDataNode] handleSave - raw x:', x);
+    console.log('[TrainingDataNode] handleSave - raw y:', y);
+    console.log('[TrainingDataNode] handleSave - parsed x:', parsedX);
+    console.log('[TrainingDataNode] handleSave - parsed y:', parsedY);
+
     if (parsedX.length === 0 || parsedY.length === 0) {
       setHasError(true);
       return;
@@ -123,23 +137,42 @@ export default function TrainingDataNode({ data, selected }) {
     setHasError(false);
 
     // Save to Zustand store
+    console.log('[TrainingDataNode] Saving to store:', { x: parsedX, y: parsedY });
     updateTrainingData({ x: parsedX, y: parsedY });
 
-    // Update hidden layers if using a preset
+    // Update hidden layers and prediction input if using a preset
     if (selectedPreset !== 'custom' && PRESET_DATASETS[selectedPreset]) {
-      updateConfig({ hiddenLayers: PRESET_DATASETS[selectedPreset].hiddenLayers });
+      const dataset = PRESET_DATASETS[selectedPreset];
+      console.log('[TrainingDataNode] Updating config with hiddenLayers:', dataset.hiddenLayers);
+      updateConfig({ hiddenLayers: dataset.hiddenLayers });
+      // Update prediction input to match the dataset's default
+      if (dataset.predictionDefault) {
+        console.log('[TrainingDataNode] Updating prediction input:', dataset.predictionDefault);
+        useNeuralNetworkStore.getState().updatePredictionInput(dataset.predictionDefault);
+      }
     }
   };
 
   const handlePresetChange = (e) => {
     const preset = e.target.value;
+    console.log('[TrainingDataNode] Preset changed to:', preset);
     setSelectedPreset(preset);
     setHasError(false);
 
     if (preset !== 'custom' && PRESET_DATASETS[preset]) {
       const dataset = PRESET_DATASETS[preset];
+      console.log('[TrainingDataNode] Loading preset data:', {
+        x: dataset.x,
+        y: dataset.y,
+        predictionDefault: dataset.predictionDefault
+      });
       setX(dataset.x);
       setY(dataset.y);
+      // Also update prediction input immediately
+      if (dataset.predictionDefault) {
+        console.log('[TrainingDataNode] Setting prediction default:', dataset.predictionDefault);
+        useNeuralNetworkStore.getState().updatePredictionInput(dataset.predictionDefault);
+      }
     }
   };
 
@@ -180,10 +213,10 @@ export default function TrainingDataNode({ data, selected }) {
         <button
           onClick={handleSave}
           onMouseDown={(e) => e.stopPropagation()}
-          className="save-btn nodrag"
-          style={{ padding: '4px 12px', fontSize: '12px' }}
+          className="icon-btn save-btn nodrag"
+          title="Save"
         >
-          Save
+          <Save size={18} />
         </button>
       </div>
       <div className="node-content">

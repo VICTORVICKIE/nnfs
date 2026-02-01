@@ -22,6 +22,7 @@ import { useNeuralNetwork } from './hooks/useNeuralNetwork';
 import {
   selectConfig,
   selectIsTrained,
+  selectIsTraining,
   selectParameters,
   selectTrainingConfig,
   selectTrainingData,
@@ -59,6 +60,7 @@ function App() {
   const config = useNeuralNetworkStore(selectConfig);
   const trainingConfig = useNeuralNetworkStore(selectTrainingConfig);
   const isTrained = useNeuralNetworkStore(selectIsTrained);
+  const isTraining = useNeuralNetworkStore(selectIsTraining);
   const parameters = useNeuralNetworkStore(selectParameters);
 
   // Use neural network hook (syncs with Zustand internally)
@@ -88,6 +90,11 @@ function App() {
     // Update training progress node data
     // This will be handled through node data updates
   }, []);
+
+  // Handle cancel training
+  const handleCancelTraining = useCallback(() => {
+    nnState.cancelTraining();
+  }, [nnState.cancelTraining]);
 
   // Handle prediction
   const handlePredict = useCallback(() => {
@@ -307,6 +314,8 @@ function App() {
                 onNetworkConfigChange: handleConfigUpdate,
                 onTrainingConfigChange: handleTrainingConfigUpdate,
                 onTrain: handleTrain,
+                onCancelTraining: handleCancelTraining,
+                isTraining: isTraining,
                 openConceptDialog: setCurrentConcept,
               }
             };
@@ -321,6 +330,8 @@ function App() {
               config: config,
               trainingConfig: trainingConfig,
               onTrain: handleTrain,
+              onCancelTraining: handleCancelTraining,
+              isTraining: isTraining,
               openConceptDialog: setCurrentConcept,
             }
           };

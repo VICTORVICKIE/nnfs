@@ -1,4 +1,7 @@
 import { useEffect } from 'react';
+import Prism from 'prismjs';
+import 'prismjs/themes/prism-okaidia.css';
+import 'prismjs/components/prism-javascript';
 import { conceptExplanations } from '../utils/conceptExplanations';
 import './ConceptDialog.css';
 
@@ -15,6 +18,11 @@ export default function ConceptDialog({ conceptKey, onClose }) {
         window.addEventListener('keydown', handleEscape);
         return () => window.removeEventListener('keydown', handleEscape);
     }, [onClose]);
+
+    // Apply syntax highlighting
+    useEffect(() => {
+        Prism.highlightAll();
+    }, [conceptKey]);
 
     if (!concept) {
         return null;
@@ -39,7 +47,7 @@ export default function ConceptDialog({ conceptKey, onClose }) {
                         <div className="concept-code-section">
                             <h3>Snippet</h3>
                             <pre className="concept-code">
-                                <code>{concept.codeSnippet}</code>
+                                <code className="language-javascript">{concept.codeSnippet}</code>
                             </pre>
                         </div>
                     )}

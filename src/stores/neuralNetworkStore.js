@@ -8,6 +8,7 @@ import { create } from 'zustand';
 export const useNeuralNetworkStore = create((set, get) => ({
   // Training state
   isTraining: false,
+  abortTraining: false,
   isTrained: false,
   currentStep: 0,
   trainingHistory: [],
@@ -44,6 +45,7 @@ export const useNeuralNetworkStore = create((set, get) => ({
   
   // Actions
   setIsTraining: (isTraining) => set({ isTraining }),
+  setAbortTraining: (abortTraining) => set({ abortTraining }),
   setIsTrained: (isTrained) => set({ isTrained }),
   setCurrentStep: (currentStep) => set({ currentStep }),
   
@@ -74,6 +76,7 @@ export const useNeuralNetworkStore = create((set, get) => ({
 
 // Selectors for optimal performance - only re-render when specific data changes
 export const selectIsTraining = (state) => state.isTraining;
+export const selectAbortTraining = (state) => state.abortTraining;
 export const selectIsTrained = (state) => state.isTrained;
 export const selectCurrentStep = (state) => state.currentStep;
 export const selectTrainingHistory = (state) => state.trainingHistory;
@@ -87,6 +90,7 @@ export const selectNetworkRef = (state) => state.networkRef;
 
 // Action selectors
 export const selectSetIsTraining = (state) => state.setIsTraining;
+export const selectSetAbortTraining = (state) => state.setAbortTraining;
 export const selectSetIsTrained = (state) => state.setIsTrained;
 export const selectSetCurrentStep = (state) => state.setCurrentStep;
 export const selectAddTrainingHistory = (state) => state.addTrainingHistory;

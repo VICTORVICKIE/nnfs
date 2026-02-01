@@ -19,12 +19,16 @@ function getBoxesFromNodes(nodes, margin = 0) {
     const width = node.width ?? node.measured?.width ?? node.style?.width ?? 0;
     const height = node.height ?? node.measured?.height ?? node.style?.height ?? 0;
 
+    // Neural network group has highest priority (shouldn't move)
+    const priority = node.id === 'neural-network' ? 1000 : 1;
+
     boxes.push({
       x: node.position.x - margin,
       y: node.position.y - margin,
       width: width + margin * 2,
       height: height + margin * 2,
       node,
+      priority,
       moved: false,
     });
   }
@@ -99,21 +103,33 @@ export function resolveCollisions(
 
         // Check if there's significant overlap
         if (px > overlapThreshold && py > overlapThreshold) {
-          A.moved = B.moved = moved = true;
+          moved = true;
+          
+          // Use priority to determine who moves
+          // Higher priority = less movement (neural network stays put)
+          const totalPriority = A.priority + B.priority;
+          const weightA = B.priority / totalPriority; // A moves proportional to B's priority
+          const weightB = A.priority / totalPriority; // B moves proportional to A's priority
           
           // Resolve along the smallest overlap axis (minimum separation)
           if (px < py) {
             // Move along x-axis
             const sx = dx > 0 ? 1 : -1;
-            const moveAmount = (px / 2) * sx;
-            A.x += moveAmount;
-            B.x -= moveAmount;
+            const moveA = (px * weightA) * sx;
+            const moveB = (px * weightB) * sx;
+            A.x += moveA;
+            B.x -= moveB;
+            if (moveA !== 0) A.moved = true;
+            if (moveB !== 0) B.moved = true;
           } else {
             // Move along y-axis
             const sy = dy > 0 ? 1 : -1;
-            const moveAmount = (py / 2) * sy;
-            A.y += moveAmount;
-            B.y -= moveAmount;
+            const moveA = (py * weightA) * sy;
+            const moveB = (py * weightB) * sy;
+            A.y += moveA;
+            B.y -= moveB;
+            if (moveA !== 0) A.moved = true;
+            if (moveB !== 0) B.moved = true;
           }
         }
       }

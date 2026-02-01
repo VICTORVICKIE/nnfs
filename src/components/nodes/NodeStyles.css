@@ -172,16 +172,13 @@
 
 .collapse-btn {
   background: #444;
-  border: 1px solid #666;
   color: #fff;
-  padding: 8px 15px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 12px;
+  font-weight: bold;
 }
 
 .collapse-btn:hover {
   background: #555;
+  transform: scale(1.1);
 }
 
 .train-section-collapsed {
@@ -263,6 +260,7 @@
   font-size: 11px;
   color: #aaa;
   white-space: nowrap;
+  align-items: flex-start;
 }
 
 .label-text {
@@ -314,6 +312,21 @@
   white-space: nowrap;
 }
 
+.icon-btn {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
 .group-header-controls {
   display: flex;
   align-items: center;
@@ -340,31 +353,47 @@
   margin-top: 2px;
 }
 
+.save-btn {
+  background: #3b82f6;
+  color: white;
+  font-weight: bold;
+}
+
+.save-btn:hover {
+  background: #2563eb;
+}
+
 .train-btn {
-  width: 100%;
-  padding: 10px;
   background: #4ade80;
-  border: none;
-  border-radius: 4px;
   color: #1a1a1a;
   font-weight: bold;
-  cursor: pointer;
-  font-size: 12px;
-  transition: background 0.2s;
 }
 
 .train-btn:hover:not(:disabled) {
   background: #22c55e;
+  transform: scale(1.1);
 }
 
 .train-btn:disabled {
   background: #666;
   cursor: not-allowed;
+  opacity: 0.5;
 }
 
 .train-btn.running {
   background: #f59e0b;
   animation: pulse 1.5s ease-in-out infinite;
+}
+
+.cancel-btn {
+  background: #ef4444;
+  color: white;
+  font-weight: bold;
+}
+
+.cancel-btn:hover {
+  background: #dc2626;
+  transform: scale(1.1);
 }
 
 @keyframes pulse {

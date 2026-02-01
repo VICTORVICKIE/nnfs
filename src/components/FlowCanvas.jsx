@@ -40,6 +40,7 @@ export default function FlowCanvas({ nodes: initialNodes, edges: initialEdges, n
   const prevIsExpandedRef = useRef(isExpanded);
   const prevNodeIdsRef = useRef(new Set());
   const prevNeuronPositionsRef = useRef(new Map());
+  const prevGroupSizeRef = useRef(null);
 
   useEffect(() => {
     const prevNodeIds = prevNodeIdsRef.current;
@@ -81,7 +82,45 @@ export default function FlowCanvas({ nodes: initialNodes, edges: initialEdges, n
       });
       prevNeuronPositionsRef.current = newNeuronPositions;
 
-      setNodes(initialNodes);
+      // Preserve positions of existing non-neuron nodes
+      setNodes((currentNodes) => {
+        const positionMap = new Map();
+        currentNodes.forEach(node => {
+          // Save positions of non-neuron nodes
+          if (node.parentId !== 'neural-network' && !node.id.startsWith('neuron-')) {
+            positionMap.set(node.id, { 
+              position: node.position,
+              width: node.width,
+              height: node.height
+            });
+          }
+        });
+
+        // Apply saved positions to new nodes
+        return initialNodes.map(node => {
+          const saved = positionMap.get(node.id);
+          if (saved) {
+            return {
+              ...node,
+              position: saved.position,
+              ...(saved.width && { width: saved.width }),
+              ...(saved.height && { height: saved.height })
+            };
+          }
+          return node;
+        });
+      });
+      
+      // Run collision detection after structure changes
+      setTimeout(() => {
+        setNodes((nds) =>
+          resolveCollisions(nds, {
+            maxIterations: 50,
+            overlapThreshold: 0.5,
+            margin: 15,
+          })
+        );
+      }, 100);
     } else {
       // Update only node data without changing positions/dimensions
       setNodes((currentNodes) =>
@@ -99,6 +138,32 @@ export default function FlowCanvas({ nodes: initialNodes, edges: initialEdges, n
       );
     }
   }, [isExpanded, initialNodes, setNodes]);
+
+  // Track group size changes and run collision detection
+  useEffect(() => {
+    const nnNode = initialNodes.find(n => n.id === 'neural-network');
+    const currentGroupWidth = nnNode?.style?.width;
+    const currentGroupHeight = nnNode?.style?.height;
+    const currentSize = currentGroupWidth && currentGroupHeight ? `${currentGroupWidth}-${currentGroupHeight}` : null;
+    const prevSize = prevGroupSizeRef.current;
+    
+    if (currentSize && prevSize && currentSize !== prevSize) {
+      // Group size changed (auto-resize from dataset change)
+      setTimeout(() => {
+        setNodes((nds) =>
+          resolveCollisions(nds, {
+            maxIterations: 50,
+            overlapThreshold: 0.5,
+            margin: 15,
+          })
+        );
+      }, 100);
+    }
+    
+    if (currentSize) {
+      prevGroupSizeRef.current = currentSize;
+    }
+  }, [initialNodes, setNodes]);
 
   useEffect(() => {
     setEdges(initialEdges);
@@ -131,7 +196,7 @@ export default function FlowCanvas({ nodes: initialNodes, edges: initialEdges, n
         }}
       >
         <Background />
-        <Controls />
+        <Controls position='top-right' />
       </ReactFlow>
     </div>
   );

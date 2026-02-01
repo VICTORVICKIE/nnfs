@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useNeuralNetworkStore } from '../stores/neuralNetworkStore';
 
 export function useFlowState(config = { hiddenLayers: [3] }) {
   // Calculate minimum group size based on network architecture
@@ -22,16 +23,42 @@ export function useFlowState(config = { hiddenLayers: [3] }) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [minGroupSize, setMinGroupSize] = useState({ width: 1000, height: 600 });
   const [groupSize, setGroupSize] = useState({ width: 1000, height: 600 });
-  const [trainingData, setTrainingData] = useState({ x: [[1], [2], [3], [4], [5]], y: [[2], [4], [6], [8], [10]] });
+  
+  // Read training data from Zustand store instead of local state
+  const trainingData = useNeuralNetworkStore(state => state.trainingData);
+  
   const [predictionInput, setPredictionInput] = useState([7]);
   const [predictionOutput, setPredictionOutput] = useState(null);
 
-  // Build full layers from hidden layers + default input/output for visualization
+  // Build full layers from hidden layers + actual input/output sizes from training data
   const getFullLayers = useCallback(() => {
     const hiddenLayers = config.hiddenLayers || [3];
-    // Default to 1 input, 1 output for visualization (will be corrected during training)
-    return [1, ...hiddenLayers, 1];
-  }, [config.hiddenLayers]);
+    
+    // Detect input and output sizes from training data
+    let inputSize = 1;
+    let outputSize = 1;
+    
+    console.log('[getFullLayers] trainingData:', trainingData);
+    
+    if (trainingData.x && trainingData.x.length > 0 && Array.isArray(trainingData.x[0])) {
+      inputSize = trainingData.x[0].length;
+      console.log('[getFullLayers] Detected inputSize from x[0]:', inputSize, 'x[0]:', trainingData.x[0]);
+    } else {
+      console.log('[getFullLayers] Could not detect input size, using default 1');
+    }
+    
+    if (trainingData.y && trainingData.y.length > 0 && Array.isArray(trainingData.y[0])) {
+      outputSize = trainingData.y[0].length;
+      console.log('[getFullLayers] Detected outputSize from y[0]:', outputSize, 'y[0]:', trainingData.y[0]);
+    } else {
+      console.log('[getFullLayers] Could not detect output size, using default 1');
+    }
+    
+    const fullLayers = [inputSize, ...hiddenLayers, outputSize];
+    console.log('[getFullLayers] Final architecture:', fullLayers);
+    
+    return fullLayers;
+  }, [config.hiddenLayers, trainingData.x, trainingData.y]);
 
   // Recalculate minimum and actual group size when hidden layers change
   useEffect(() => {
@@ -43,10 +70,6 @@ export function useFlowState(config = { hiddenLayers: [3] }) {
 
   const toggleExpanded = useCallback(() => {
     setIsExpanded(prev => !prev);
-  }, []);
-
-  const updateTrainingData = useCallback((data) => {
-    setTrainingData(data);
   }, []);
 
   const updatePredictionInput = useCallback((input) => {
@@ -203,8 +226,7 @@ export function useFlowState(config = { hiddenLayers: [3] }) {
       position: { x: -200, y: isExpanded ? 80 : 150 },
       data: {
         x: trainingData.x,
-        y: trainingData.y,
-        onUpdate: updateTrainingData
+        y: trainingData.y
       }
     },
     {
@@ -265,7 +287,7 @@ export function useFlowState(config = { hiddenLayers: [3] }) {
         onUpdateInput: updatePredictionInput
       }
     }
-  ], [isExpanded, groupSize, minGroupSize, trainingData, predictionInput, predictionOutput, toggleExpanded, updateGroupSize, updateTrainingData, updatePredictionInput]);
+  ], [isExpanded, groupSize, minGroupSize, trainingData, predictionInput, predictionOutput, toggleExpanded, updateGroupSize, updatePredictionInput]);
 
   // Collapsed view edges
   const collapsedEdges = useMemo(() => [
@@ -369,7 +391,6 @@ export function useFlowState(config = { hiddenLayers: [3] }) {
     minGroupSize,
     updateGroupSize,
     trainingData,
-    updateTrainingData,
     predictionInput,
     updatePredictionInput,
     predictionOutput,

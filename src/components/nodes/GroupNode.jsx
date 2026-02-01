@@ -1,4 +1,5 @@
 import { Handle, NodeResizer, Position, useReactFlow } from '@xyflow/react';
+import { Minus, Play, Save, Square } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { resolveCollisions } from '../../utils/collisionDetection';
 import './NodeStyles.css';
@@ -13,6 +14,7 @@ export default function GroupNode({ data, selected }) {
     trainingConfig = {},
     config = {},
     onTrain,
+    onCancelTraining,
     onNetworkConfigChange,
     onTrainingConfigChange,
     isTraining = false,
@@ -89,6 +91,11 @@ export default function GroupNode({ data, selected }) {
     } finally {
       setIsRunning(false);
     }
+  };
+
+  const handleCancel = (e) => {
+    e.stopPropagation();
+    onCancelTraining?.();
   };
 
   return (
@@ -268,10 +275,10 @@ export default function GroupNode({ data, selected }) {
             </label>
             <button
               onClick={handleSaveConfig}
-              className="save-config-btn"
-              style={{ marginLeft: '8px' }}
+              className="icon-btn save-btn"
+              title="Save configuration"
             >
-              Save
+              <Save size={18} />
             </button>
           </div>
         </div>
@@ -279,12 +286,21 @@ export default function GroupNode({ data, selected }) {
           <button
             onClick={handleTrain}
             disabled={isRunning || isTraining}
-            className={`train-btn ${isRunning || isTraining ? 'running' : ''}`}
-            style={{ marginRight: '8px' }}
+            className={`icon-btn train-btn ${isRunning || isTraining ? 'running' : ''}`}
+            title={isRunning || isTraining ? 'Training...' : 'Start Training'}
           >
-            {isRunning || isTraining ? 'Training...' : 'Start Training'}
+            <Play size={18} fill="currentColor" />
           </button>
-          <button onClick={onToggle} className="collapse-btn">Collapse</button>
+          {(isRunning || isTraining) && (
+            <button
+              onClick={handleCancel}
+              className="icon-btn cancel-btn"
+              title="Cancel training"
+            >
+              <Square size={18} fill="currentColor" />
+            </button>
+          )}
+          <button onClick={onToggle} className="icon-btn collapse-btn" title="Collapse"><Minus size={18} /></button>
         </div>
       </div>
     </>
