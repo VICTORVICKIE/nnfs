@@ -1,7 +1,7 @@
 import { BaseEdge, EdgeLabelRenderer, getSmoothStepPath } from '@xyflow/react';
 import { selectParameters, useNeuralNetworkStore } from '../../stores/neuralNetworkStore';
 
-export default function WeightEdge({ id, sourceX, sourceY, targetX, targetY, sourcePosition, targetPosition, style = {}, markerEnd }) {
+export default function WeightEdge({ id, sourceX, sourceY, targetX, targetY, sourcePosition, targetPosition, style = {}, markerEnd, data }) {
     const [edgePath, labelX, labelY] = getSmoothStepPath({
         sourceX,
         sourceY,
@@ -23,9 +23,14 @@ export default function WeightEdge({ id, sourceX, sourceY, targetX, targetY, sou
         const fromIdx = parseInt(parts[2]);
         const toIdx = parseInt(parts[3]);
 
+        // Extract weight value from parameters
+        const weight = params?.weights?.[layerIdx]?.[toIdx]?.[fromIdx];
 
         if (weight !== undefined) {
-            weightLabel = `w${layerIdx + 1}${toIdx + 1}${fromIdx + 1} = ${weight.toFixed(2)}`;
+            weightLabel = `w${layerIdx + 1}${toIdx + 1}${fromIdx + 1} = ${weight.toFixed(3)}`;
+        } else {
+            // Show label without value before training
+            weightLabel = `w${layerIdx + 1}${toIdx + 1}${fromIdx + 1}`;
         }
     }
 
@@ -44,6 +49,7 @@ export default function WeightEdge({ id, sourceX, sourceY, targetX, targetY, sou
                             padding: '2px 4px',
                             borderRadius: '3px',
                             color: '#fff',
+                            zIndex: 10,
                         }}
                         className="nodrag nopan"
                     >

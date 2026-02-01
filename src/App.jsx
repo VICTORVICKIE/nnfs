@@ -46,6 +46,7 @@ const nodeTypes = {
 const edgeTypes = {
   default: WeightEdge,
   smoothstep: WeightEdge,
+  straight: WeightEdge,
 };
 
 function App() {
@@ -183,7 +184,7 @@ function App() {
     console.log('[handleTrain]   Full architecture:', fullLayers);
     console.log('[handleTrain]   Activation:', config.activation);
     console.log('[handleTrain]   Cost function:', config.costFunction);
-    
+
     await nnState.train(parsedX, parsedY, onStep, fullLayers);
   }, [nnState, config]);
 

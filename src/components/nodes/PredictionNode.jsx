@@ -23,7 +23,7 @@ export default function PredictionNode({ data, selected }) {
     if (isTrained && onPredict && inputChanged) {
       prevInputRef.current = input;
       isPredictingRef.current = true;
-      
+
       // Call predict and reset flag after
       try {
         onPredict();

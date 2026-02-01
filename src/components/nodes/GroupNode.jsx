@@ -111,7 +111,7 @@ export default function GroupNode({ data, selected }) {
                 onMouseDown={(e) => e.stopPropagation()}
                 onPointerDown={(e) => e.stopPropagation()}
                 className="config-input nodrag"
-                placeholder="4, 4" 
+                placeholder="4, 4"
                 title="Input/output sizes auto-detected from training data"
               />
             </label>
