@@ -59,6 +59,7 @@ export function useFlowState(config = { layers: [1, 3, 1] }) {
     });
 
     // Create edges between neurons with weight labels
+    // Position labels at the start (source) to avoid overlap in the middle
     for (let i = 0; i < layers.length - 1; i++) {
       const fromLayerSize = layers[i];
       const toLayerSize = layers[i + 1];
@@ -69,12 +70,14 @@ export function useFlowState(config = { layers: [1, 3, 1] }) {
             id: `edge-${i}-${fromIdx}-${toIdx}`,
             source: `neuron-${i}-${fromIdx}`,
             target: `neuron-${i + 1}-${toIdx}`,
-            type: 'default',
+            type: 'straight',
             animated: false,
             label: `w${i + 1}${toIdx + 1}${fromIdx + 1}`,
+            labelPosition: 0.15, // Position label at 15% from source (near start)
+            labelStyle: { fill: '#bbb', fontSize: 8, fontWeight: 500 },
+            labelBgStyle: { fill: '#1a1a1a', fillOpacity: 0.9, rx: 2, ry: 2 },
+            labelBgPadding: [2, 4],
             style: { stroke: '#666', strokeWidth: 1.5 },
-            labelStyle: { fill: '#aaa', fontSize: 9, fontWeight: 500 },
-            labelBgStyle: { fill: '#1a1a1a', fillOpacity: 0.7 }
           });
         }
       }
@@ -211,7 +214,7 @@ export function useFlowState(config = { layers: [1, 3, 1] }) {
     {
       id: 'training-data',
       type: 'trainingData',
-      position: { x: 50, y: isExpanded ? 80 : 250 },
+      position: { x: 50, y: isExpanded ? 80 : 150 },
       data: {
         x: trainingData.x,
         y: trainingData.y,
@@ -221,7 +224,7 @@ export function useFlowState(config = { layers: [1, 3, 1] }) {
     {
       id: 'neural-network',
       type: isExpanded ? 'group' : 'neuralNetwork',
-      position: { x: isExpanded ? 400 : 500, y: isExpanded ? 80 : 200 },
+      position: { x: isExpanded ? 400 : 450, y: isExpanded ? 80 : 100 },
       style: isExpanded && groupSize ? {
         width: groupSize.width || 750,
         height: groupSize.height || 220,
@@ -239,11 +242,25 @@ export function useFlowState(config = { layers: [1, 3, 1] }) {
       id: 'training-progress',
       type: 'trainingProgress',
       position: {
-        x: isExpanded && groupSize ? 600 + groupSize.width + 50 : 1400,
-        y: 50
+        x: isExpanded ? 50 : 50,
+        y: isExpanded && groupSize ? 150 + groupSize.height + 50 : 500
       },
       style: {
-        height: 300
+        width: 350,
+        height: 350
+      },
+      data: {}
+    },
+    {
+      id: 'learning-progress',
+      type: 'learningProgress',
+      position: {
+        x: isExpanded ? 430 : 450,
+        y: isExpanded && groupSize ? 150 + groupSize.height + 50 : 500
+      },
+      style: {
+        width: 380,
+        height: 380
       },
       data: {}
     },
@@ -251,8 +268,8 @@ export function useFlowState(config = { layers: [1, 3, 1] }) {
       id: 'prediction',
       type: 'prediction',
       position: {
-        x: isExpanded && groupSize ? 600 + groupSize.width + 50 : 1400,
-        y: 300
+        x: isExpanded && groupSize ? 400 + groupSize.width + 50 : 900,
+        y: isExpanded ? 80 : 200
       },
       data: {
         input: predictionInput,
@@ -281,7 +298,18 @@ export function useFlowState(config = { layers: [1, 3, 1] }) {
     {
       id: 'e3',
       source: 'neural-network',
+      sourceHandle: 'bottom-left',
       target: 'training-progress',
+      targetHandle: 'input',
+      type: 'smoothstep',
+      animated: true
+    },
+    {
+      id: 'e4',
+      source: 'neural-network',
+      sourceHandle: 'bottom-right',
+      target: 'learning-progress',
+      targetHandle: 'input',
       type: 'smoothstep',
       animated: true
     }
@@ -302,7 +330,9 @@ export function useFlowState(config = { layers: [1, 3, 1] }) {
       {
         id: 'e2-exp',
         source: 'neural-network',
+        sourceHandle: 'bottom-left',
         target: 'training-progress',
+        targetHandle: 'input',
         type: 'smoothstep',
         animated: true
       },
@@ -310,6 +340,15 @@ export function useFlowState(config = { layers: [1, 3, 1] }) {
         id: 'e3-exp',
         source: 'neural-network',
         target: 'prediction',
+        type: 'smoothstep',
+        animated: true
+      },
+      {
+        id: 'e4-exp',
+        source: 'neural-network',
+        sourceHandle: 'bottom-right',
+        target: 'learning-progress',
+        targetHandle: 'input',
         type: 'smoothstep',
         animated: true
       },

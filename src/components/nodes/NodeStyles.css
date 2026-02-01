@@ -6,6 +6,9 @@
   min-width: 200px;
   color: #fff;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 }
 
 .node-header {
@@ -25,6 +28,10 @@
 
 .node-content {
   font-size: 12px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 
 .data-section {
@@ -369,10 +376,13 @@
 
 .chart-container {
   width: 100%;
-  height: 150px;
+  min-height: 250px;
+  height: 100%;
   background: #1a1a1a;
   border-radius: 4px;
   padding: 5px;
+  display: flex;
+  flex-direction: column;
 }
 
 .no-data {

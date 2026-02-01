@@ -1,10 +1,15 @@
 import { Handle, NodeResizer, Position } from '@xyflow/react';
 import { useState } from 'react';
 import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import { selectTrainingHistory, selectCurrentStep, useNeuralNetworkStore } from '../../stores/neuralNetworkStore';
 import './NodeStyles.css';
 
 export default function TrainingProgressNode({ data, selected }) {
-  const { history = [] } = data;
+  // Use Zustand selector - only re-renders when training history changes
+  const history = useNeuralNetworkStore(selectTrainingHistory);
+  const currentStep = useNeuralNetworkStore(selectCurrentStep); // Subscribe for real-time updates
+
+  console.log('[TrainingProgressNode] Rendering, history length:', history.length, 'currentStep:', currentStep);
 
   const chartData = history.map(({ step, loss }) => ({
     step,
@@ -16,10 +21,10 @@ export default function TrainingProgressNode({ data, selected }) {
       <NodeResizer
         color="#10b981"
         isVisible={selected}
-        minWidth={250}
-        minHeight={200}
+        minWidth={350}
+        minHeight={350}
       />
-      <Handle type="target" position={Position.Left} id="input" />
+      <Handle type="target" position={Position.Top} id="input" />
       <div className="node-header">
         <span>Training Progress</span>
       </div>
@@ -27,7 +32,7 @@ export default function TrainingProgressNode({ data, selected }) {
         <div className="node-content">
           <div className="chart-container">
             {chartData.length > 0 ? (
-              <ResponsiveContainer width="100%" height={150}>
+              <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={chartData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#444" />
                   <XAxis
@@ -53,6 +58,7 @@ export default function TrainingProgressNode({ data, selected }) {
                     stroke="#4ade80"
                     strokeWidth={2}
                     dot={false}
+                    isAnimationActive={false}
                   />
                 </LineChart>
               </ResponsiveContainer>

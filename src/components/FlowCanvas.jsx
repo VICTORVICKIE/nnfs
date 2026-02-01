@@ -1,22 +1,37 @@
-import { useCallback, useMemo, useRef, useEffect } from 'react';
 import {
-  ReactFlow,
+  addEdge,
   Background,
   Controls,
-  useNodesState,
+  ReactFlow,
   useEdgesState,
-  useReactFlow,
-  addEdge
+  useNodesState,
+  useReactFlow
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import './FlowCanvas.css';
 
 // Component that runs inside ReactFlow context to calculate group size
-function GroupSizeCalculator({ nodes, setNodes }) {
+function GroupSizeCalculator({ nodes, setNodes, isExpanded }) {
   const groupSizeTimeoutRef = useRef(null);
-  const { getNode } = useReactFlow();
+  const { getNode, fitView } = useReactFlow();
+  const hasFitOnMount = useRef(false);
+
+  // Fit view on mount
+  useEffect(() => {
+    if (!hasFitOnMount.current && nodes.length > 0) {
+      setTimeout(() => {
+        fitView({ padding: 0.2, duration: 400 });
+        hasFitOnMount.current = true;
+      }, 100);
+    }
+  }, [nodes.length, fitView]);
 
   useEffect(() => {
+    // Only recalculate group size on structural change (expand/collapse)
+    // Not on every node update (which happens during training)
+    if (!isExpanded) return;
+
     // Clear any pending calculation
     if (groupSizeTimeoutRef.current) {
       clearTimeout(groupSizeTimeoutRef.current);
@@ -35,43 +50,43 @@ function GroupSizeCalculator({ nodes, setNodes }) {
       childNodes.forEach(child => {
         // Get the actual node from React Flow to access DOM measurements
         const actualNode = getNode(child.id) || child;
-        
+
         const x = actualNode.position?.x || child.position?.x || 0;
         const y = actualNode.position?.y || child.position?.y || 0;
-        
+
         // Try to get actual DOM element size
         let width = 200;
         let height = 50;
-        
+
         // First try to get from React Flow's measured dimensions
         if (actualNode.measured?.width) {
           width = actualNode.measured.width;
         } else if (actualNode.width) {
           width = actualNode.width;
         } else if (actualNode.style?.width) {
-          width = typeof actualNode.style.width === 'string' 
-            ? parseFloat(actualNode.style.width) 
+          width = typeof actualNode.style.width === 'string'
+            ? parseFloat(actualNode.style.width)
             : actualNode.style.width;
         } else if (child.style?.width) {
-          width = typeof child.style.width === 'string' 
-            ? parseFloat(child.style.width) 
+          width = typeof child.style.width === 'string'
+            ? parseFloat(child.style.width)
             : child.style.width;
         }
-        
+
         if (actualNode.measured?.height) {
           height = actualNode.measured.height;
         } else if (actualNode.height) {
           height = actualNode.height;
         } else if (actualNode.style?.height) {
-          height = typeof actualNode.style.height === 'string' 
-            ? parseFloat(actualNode.style.height) 
+          height = typeof actualNode.style.height === 'string'
+            ? parseFloat(actualNode.style.height)
             : actualNode.style.height;
         } else if (child.style?.height) {
-          height = typeof child.style.height === 'string' 
-            ? parseFloat(child.style.height) 
+          height = typeof child.style.height === 'string'
+            ? parseFloat(child.style.height)
             : child.style.height;
         }
-        
+
         // Try to get actual DOM element to measure its real size
         // React Flow uses class 'react-flow__node' with data-id attribute
         try {
@@ -85,14 +100,14 @@ function GroupSizeCalculator({ nodes, setNodes }) {
               return nodeId === child.id;
             });
           }
-          
+
           if (nodeElement) {
             const rect = nodeElement.getBoundingClientRect();
             // Use scrollHeight for height as it includes all content (even if overflow hidden)
             // and getBoundingClientRect for width
             const measuredHeight = Math.max(rect.height, nodeElement.scrollHeight || 0);
             const measuredWidth = rect.width;
-            
+
             if (measuredWidth > 0) width = measuredWidth;
             if (measuredHeight > 0) height = measuredHeight;
           }
@@ -116,7 +131,7 @@ function GroupSizeCalculator({ nodes, setNodes }) {
       const currentHeight = groupNode.style?.height || 0;
       const widthDiff = Math.abs(currentWidth - newWidth);
       const heightDiff = Math.abs(currentHeight - newHeight);
-      
+
       if (widthDiff > 1 || heightDiff > 1) {
         setNodes(nds => nds.map(n => {
           if (n.id === 'neural-network' && n.type === 'group') {
@@ -139,12 +154,12 @@ function GroupSizeCalculator({ nodes, setNodes }) {
         clearTimeout(groupSizeTimeoutRef.current);
       }
     };
-  }, [nodes, setNodes, getNode]);
+  }, [isExpanded, nodes, setNodes, getNode]); // Only depend on isExpanded for structural changes
 
   return null; // This component doesn't render anything
 }
 
-export default function FlowCanvas({ nodes: initialNodes, edges: initialEdges, nodeTypes }) {
+export default function FlowCanvas({ nodes: initialNodes, edges: initialEdges, nodeTypes, edgeTypes, isExpanded }) {
   // Use useNodesState and useEdgesState - React Flow's recommended hooks
   // These manage state internally and provide change handlers
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
@@ -155,17 +170,32 @@ export default function FlowCanvas({ nodes: initialNodes, edges: initialEdges, n
     [setEdges]
   );
 
-  // Sync only when initialNodes changes (for training state updates, etc)
-  // Use a ref to track if we should update
-  const prevInitialNodesRef = useRef(initialNodes);
-  
+  // Only sync nodes on STRUCTURAL changes (expand/collapse), not data updates
+  // This prevents resetting user-modified positions/sizes during training
+  const prevIsExpandedRef = useRef(isExpanded);
+
   useEffect(() => {
-    // Only update if initialNodes actually changed (not just re-rendered)
-    if (prevInitialNodesRef.current !== initialNodes) {
-      prevInitialNodesRef.current = initialNodes;
+    // Only reset nodes when expand/collapse state changes
+    if (prevIsExpandedRef.current !== isExpanded) {
+      prevIsExpandedRef.current = isExpanded;
       setNodes(initialNodes);
+    } else {
+      // Update only node data without changing positions/dimensions
+      setNodes((currentNodes) =>
+        currentNodes.map((node) => {
+          const updatedNode = initialNodes.find((n) => n.id === node.id);
+          if (updatedNode) {
+            return {
+              ...node,
+              data: updatedNode.data, // Update data only
+              type: updatedNode.type, // Update type in case of expand/collapse
+            };
+          }
+          return node;
+        })
+      );
     }
-  }, [initialNodes, setNodes]);
+  }, [isExpanded, initialNodes, setNodes]);
 
   useEffect(() => {
     setEdges(initialEdges);
@@ -180,6 +210,7 @@ export default function FlowCanvas({ nodes: initialNodes, edges: initialEdges, n
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
         nodeTypes={nodeTypes}
+        edgeTypes={edgeTypes}
         nodesDraggable={true}
         nodesConnectable={true}
         elementsSelectable={true}
@@ -189,7 +220,7 @@ export default function FlowCanvas({ nodes: initialNodes, edges: initialEdges, n
         fitView
         fitViewOptions={{ padding: 0.2 }}
         connectionLineStyle={{ stroke: '#fff', strokeWidth: 2 }}
-        defaultEdgeOptions={{ 
+        defaultEdgeOptions={{
           type: 'smoothstep',
           animated: true,
           style: { stroke: '#888', strokeWidth: 2 }
@@ -197,7 +228,7 @@ export default function FlowCanvas({ nodes: initialNodes, edges: initialEdges, n
       >
         <Background />
         <Controls />
-        <GroupSizeCalculator nodes={nodes} setNodes={setNodes} />
+        <GroupSizeCalculator nodes={nodes} setNodes={setNodes} isExpanded={isExpanded} />
       </ReactFlow>
     </div>
   );

@@ -1,4 +1,4 @@
-import { NodeResizer, Handle, Position } from '@xyflow/react';
+import { Handle, NodeResizer, Position } from '@xyflow/react';
 import { useState } from 'react';
 import './NodeStyles.css';
 
@@ -42,7 +42,7 @@ export default function GroupNode({ data, selected }) {
   // Configuration change handlers (now just update local state)
   const handleSaveConfig = (e) => {
     e.stopPropagation();
-    
+
     const newLayers = pendingLayers.split(',').map(v => parseInt(v.trim()) || 1).filter(v => v > 0);
     onNetworkConfigChange?.({ layers: newLayers, activation: pendingActivation, costFunction: pendingCostFunction });
     onTrainingConfigChange?.({ steps: pendingSteps, learningRate: pendingLearningRate, method: pendingMethod });
@@ -61,7 +61,7 @@ export default function GroupNode({ data, selected }) {
     setLocalLoss(null);
 
     try {
-      await onTrain?.(trainingData.x, trainingData.y, async (step, loss, parameters) => {
+      await onTrain?.(async (step, loss, parameters) => {
         setLocalStep(step);
         setLocalLoss(loss);
       });
@@ -87,8 +87,9 @@ export default function GroupNode({ data, selected }) {
         minHeight={220}
       />
       <Handle type="target" position={Position.Left} id="input" />
-      <Handle type="source" position={Position.Right} id="output-progress" style={{ top: '30%' }} />
-      <Handle type="source" position={Position.Right} id="output-prediction" style={{ top: '70%' }} />
+      <Handle type="source" position={Position.Right} id="output" />
+      <Handle type="source" position={Position.Bottom} id="bottom-left" style={{ left: '33%' }} />
+      <Handle type="source" position={Position.Bottom} id="bottom-right" style={{ left: '66%' }} />
       <div className="neural-network-group-header">
         <div className="group-title">{label}</div>
         {isTrained && (

@@ -1,48 +1,58 @@
-import { Handle, Position, NodeResizer } from '@xyflow/react';
+import { Handle, NodeResizer, Position } from '@xyflow/react';
 import { useState } from 'react';
+import {
+  selectCurrentStep,
+  selectIsTrained,
+  selectIsTraining,
+  selectTrainingData,
+  selectTrainingHistory,
+  useNeuralNetworkStore,
+} from '../../stores/neuralNetworkStore';
 import Cube3D from '../Cube3D';
 import './NodeStyles.css';
 
 export default function NeuralNetworkNode({ data, selected }) {
-  const { 
-    isExpanded = false, 
+  // Use Zustand selectors - only re-renders when specific values change
+  const trainingData = useNeuralNetworkStore(selectTrainingData);
+  const isTraining = useNeuralNetworkStore(selectIsTraining);
+  const currentStep = useNeuralNetworkStore(selectCurrentStep);
+  const trainingHistory = useNeuralNetworkStore(selectTrainingHistory);
+  const isTrained = useNeuralNetworkStore(selectIsTrained);
+
+  const {
+    isExpanded = false,
     onToggle,
-    trainingData = { x: [], y: [] },
     config = {},
     trainingConfig = {},
     onTrain,
-    isTraining = false,
-    currentStep: externalCurrentStep = 0,
-    trainingHistory = [],
-    isTrained = false
   } = data;
 
   const [isRunning, setIsRunning] = useState(false);
-  const [currentStep, setCurrentStep] = useState(0);
-  const [currentLoss, setCurrentLoss] = useState(null);
+  const [localStep, setLocalStep] = useState(0);
+  const [localLoss, setLocalLoss] = useState(null);
 
-  // Use external state (from hook) if training is not running locally
-  const displayStep = isRunning ? currentStep : externalCurrentStep;
-  const displayLoss = isRunning 
-    ? currentLoss 
+  // Use context state (updates live during training)
+  const displayStep = isRunning ? localStep : currentStep;
+  const displayLoss = isRunning
+    ? localLoss
     : (trainingHistory.length > 0 ? trainingHistory[trainingHistory.length - 1]?.loss : null);
 
   const handleTrain = async (e) => {
     e.stopPropagation(); // Prevent expand/collapse when clicking train
-    
+
     if (!trainingConfig.steps || trainingConfig.steps < 1) {
       alert('Training steps must be provided and greater than 0');
       return;
     }
 
     setIsRunning(true);
-    setCurrentStep(0);
-    setCurrentLoss(null);
+    setLocalStep(0);
+    setLocalLoss(null);
 
     try {
-      await onTrain?.(trainingData.x, trainingData.y, async (step, loss, parameters) => {
-        setCurrentStep(step);
-        setCurrentLoss(loss);
+      await onTrain?.(async (step, loss, parameters) => {
+        setLocalStep(step);
+        setLocalLoss(loss);
       });
     } catch (error) {
       console.error('Training error:', error);
@@ -61,8 +71,8 @@ export default function NeuralNetworkNode({ data, selected }) {
   // When collapsed, render normal node with cube and training button
   return (
     <div className={`custom-node neural-network-node`}>
-      <NodeResizer 
-        color="#646cff" 
+      <NodeResizer
+        color="#646cff"
         isVisible={selected}
         minWidth={250}
         minHeight={200}
@@ -74,8 +84,8 @@ export default function NeuralNetworkNode({ data, selected }) {
           <Cube3D onClick={onToggle} isExpanded={isExpanded} />
         </div>
         <div className="train-section-collapsed">
-          <button 
-            onClick={handleTrain} 
+          <button
+            onClick={handleTrain}
             disabled={isRunning || isTraining}
             className={`train-btn ${isRunning || isTraining ? 'running' : ''}`}
           >
@@ -96,6 +106,8 @@ export default function NeuralNetworkNode({ data, selected }) {
         </div>
       </div>
       <Handle type="source" position={Position.Right} id="output" />
+      <Handle type="source" position={Position.Bottom} id="bottom-left" style={{ left: '33%' }} />
+      <Handle type="source" position={Position.Bottom} id="bottom-right" style={{ left: '66%' }} />
     </div>
   );
 }

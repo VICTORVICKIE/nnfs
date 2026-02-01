@@ -57,7 +57,7 @@ export class NeuralNetwork {
     }
   }
 
-  // Cost functions
+  // Cost functions (for a single output value)
   cost(y, yPred) {
     switch (this.costFunction) {
       case 'mse':
@@ -69,6 +69,15 @@ export class NeuralNetwork {
       default:
         return (y - yPred) ** 2;
     }
+  }
+
+  // Cost for an entire sample (all outputs)
+  sampleCost(y, yPred) {
+    let totalCost = 0;
+    for (let i = 0; i < y.length; i++) {
+      totalCost += this.cost(y[i], yPred[i]);
+    }
+    return totalCost / y.length; // Return average cost across outputs
   }
 
   costDerivative(y, yPred) {
@@ -103,7 +112,10 @@ export class NeuralNetwork {
         z.push(sum);
       }
       zs.push(z);
-      activations.push(z.map(val => this.activate(val)));
+      
+      // Use linear activation (no activation) for output layer, activation function for hidden layers
+      const isOutputLayer = (i === this.weights.length - 1);
+      activations.push(z.map(val => isOutputLayer ? val : this.activate(val)));
     }
     
     return { activations, zs, output: activations[activations.length - 1] };
@@ -123,11 +135,12 @@ export class NeuralNetwork {
       biases: this.biases.map(b => b.map(() => 0))
     };
     
-    // Output layer error
+    // Output layer error (use derivative of 1 for linear activation on output layer)
     let delta = [];
     for (let i = 0; i < yPred.length; i++) {
       const costDeriv = this.costDerivative(y[i] || y[0], yPred[i]);
-      delta.push(costDeriv * this.activateDerivative(zs[zs.length - 1][i]));
+      // Output layer uses linear activation, so derivative is 1
+      delta.push(costDeriv * 1);
     }
     
     // Backpropagate through layers
@@ -217,6 +230,16 @@ export class NeuralNetwork {
   async train(x, y, steps, learningRate, method = 'backpropagation', onStep = null) {
     const history = [];
     
+    console.log('[NeuralNetwork.train] Starting training:', {
+      samples: x.length,
+      inputShape: x[0]?.length,
+      outputShape: y[0]?.length,
+      steps,
+      learningRate,
+      method,
+      architecture: this.layers
+    });
+    
     for (let step = 0; step < steps; step++) {
       let totalLoss = 0;
       let gradients = {
@@ -231,9 +254,21 @@ export class NeuralNetwork {
         
         const { activations, zs, output: yPred } = this.forward(xSample);
         
-        // Calculate loss
-        const loss = this.cost(ySample[0] || ySample[ySample.length - 1], yPred[0] || yPred[yPred.length - 1]);
+        // Calculate loss for all outputs
+        const loss = this.sampleCost(ySample, yPred);
         totalLoss += loss;
+        
+        // Log first sample details on specific steps
+        if (sample === 0 && (step === 0 || step === 10 || step % 50 === 0)) {
+          console.log(`[NeuralNetwork] Step ${step}, Sample ${sample}:`, {
+            input: xSample,
+            expected: ySample,
+            predicted: yPred.map(v => v.toFixed(4)),
+            loss: loss.toFixed(6),
+            activations: activations.map(a => a.map(v => v.toFixed(4))),
+            zs: zs.map(z => z.map(v => v.toFixed(4)))
+          });
+        }
         
         // Compute gradients for this sample
         let sampleGradients;
@@ -262,6 +297,15 @@ export class NeuralNetwork {
             gradients.weights[layer][i][j] /= x.length;
           }
         }
+      }
+      
+      // Log gradients on key steps
+      if (step === 0 || step === 10 || step % 50 === 0) {
+        console.log(`[NeuralNetwork] Step ${step} Gradients:`, {
+          weights: gradients.weights.map(w => w.map(row => row.map(v => v.toFixed(6)))),
+          biases: gradients.biases.map(b => b.map(v => v.toFixed(6))),
+          learningRate
+        });
       }
       
       // Update parameters

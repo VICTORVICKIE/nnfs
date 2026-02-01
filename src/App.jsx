@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import './App.css';
+import WeightEdge from './components/edges/WeightEdge';
 import FlowCanvas from './components/FlowCanvas';
 import BiasNode from './components/nodes/BiasNode';
 import ForwardPassNode from './components/nodes/ForwardPassNode';
 import GroupNode from './components/nodes/GroupNode';
+import LearningProgressNode from './components/nodes/LearningProgressNode';
 import NeuralNetworkNode from './components/nodes/NeuralNetworkNode';
 import NeuronNode from './components/nodes/NeuronNode';
 import PredictionNode from './components/nodes/PredictionNode';
@@ -15,6 +17,15 @@ import TrainingProgressNode from './components/nodes/TrainingProgressNode';
 import WeightNode from './components/nodes/WeightNode';
 import { useFlowState } from './hooks/useFlowState.jsx';
 import { useNeuralNetwork } from './hooks/useNeuralNetwork';
+import {
+  selectConfig,
+  selectIsTrained,
+  selectParameters,
+  selectTrainingConfig,
+  selectTrainingData,
+  selectUpdatePredictionInput,
+  useNeuralNetworkStore,
+} from './stores/neuralNetworkStore';
 
 const nodeTypes = {
   trainingData: TrainingDataNode,
@@ -22,6 +33,7 @@ const nodeTypes = {
   prediction: PredictionNode,
   trainingLoop: TrainingLoopNode,
   trainingProgress: TrainingProgressNode,
+  learningProgress: LearningProgressNode,
   trainedParameters: TrainedParametersNode,
   forwardPass: ForwardPassNode,
   weight: WeightNode,
@@ -31,9 +43,31 @@ const nodeTypes = {
   simpleGroup: SimpleGroupNode,
 };
 
+const edgeTypes = {
+  default: WeightEdge,
+  smoothstep: WeightEdge,
+};
+
 function App() {
+  // Get config from Zustand store
+  const config = useNeuralNetworkStore(selectConfig);
+  const trainingConfig = useNeuralNetworkStore(selectTrainingConfig);
+  const isTrained = useNeuralNetworkStore(selectIsTrained);
+  const parameters = useNeuralNetworkStore(selectParameters);
+
+  console.log('[App.jsx] isTrained:', isTrained);
+
+  // Use neural network hook (syncs with Zustand internally)
   const nnState = useNeuralNetwork();
-  const flowState = useFlowState(nnState.config);
+  const flowState = useFlowState(config);
+
+  // Get store actions
+  const updatePredictionInput = useNeuralNetworkStore(selectUpdatePredictionInput);
+
+  // Sync flow state prediction input to store
+  useEffect(() => {
+    updatePredictionInput(flowState.predictionInput);
+  }, [flowState.predictionInput, updatePredictionInput]);
 
   // Handle configuration updates (invalidates training)
   const handleConfigUpdate = useCallback((newConfig) => {
@@ -51,30 +85,76 @@ function App() {
     // This will be handled through node data updates
   }, []);
 
-  // Handle training completion
-  const handleTrain = useCallback(async (x, y, onStep) => {
-    // Parse raw strings into arrays of numbers
+  // Handle prediction
+  const handlePredict = useCallback(() => {
+    const predictionInput = flowState.predictionInput;
+
+    // Parse input
     const parseInput = (val) => {
       if (typeof val === 'string') {
-        return val.split(',').map(v => {
-          const num = parseFloat(v.trim());
-          return isNaN(num) ? 0 : num;
-        });
+        return val.split(',').map(v => parseFloat(v.trim())).filter(n => !isNaN(n));
       }
-      return val;
+      if (Array.isArray(val)) {
+        return val;
+      }
+      return [val];
     };
 
-    const parsedX = x.map(parseInput);
-    const parsedY = y.map(parseInput);
+    const parsedInput = parseInput(predictionInput);
 
-    // Validate training data structure
-    if (!parsedX || !parsedY || !Array.isArray(parsedX) || !Array.isArray(parsedY)) {
+    if (parsedInput.length === 0) {
+      alert('Please enter a valid input value');
+      return;
+    }
+
+    // Make prediction
+    const output = nnState.predict(parsedInput);
+    flowState.updatePredictionOutput(output);
+  }, [flowState.predictionInput, flowState.updatePredictionOutput, nnState.predict]);
+
+  // Handle training completion
+  const handleTrain = useCallback(async (onStep) => {
+    // Read latest training data directly from Zustand store
+    const { x, y } = useNeuralNetworkStore.getState().trainingData;
+
+    console.log('[handleTrain] Starting training with data:', { x, y });
+    console.log('[handleTrain] Data types:', { xType: typeof x, yType: typeof y, xIsArray: Array.isArray(x), yIsArray: Array.isArray(y) });
+
+    // Validate training data exists
+    if (!x || !y || !Array.isArray(x) || !Array.isArray(y)) {
       alert('Invalid training data: x and y must be arrays');
       return;
     }
 
+    if (x.length === 0 || y.length === 0) {
+      alert('Training data is empty. Please add training samples in the Training Data node.');
+      return;
+    }
+
+    // Parse raw strings into arrays of numbers
+    const parseInput = (val) => {
+      if (typeof val === 'string') {
+        const parsed = val.split(',').map(v => {
+          const num = parseFloat(v.trim());
+          return isNaN(num) ? 0 : num;
+        });
+        // Filter out empty strings that result in [0]
+        return parsed.length > 0 ? parsed : [];
+      }
+      if (Array.isArray(val)) {
+        return val;
+      }
+      // Single number
+      return [val];
+    };
+
+    const parsedX = x.map(parseInput).filter(arr => arr.length > 0);
+    const parsedY = y.map(parseInput).filter(arr => arr.length > 0);
+
+    console.log('[handleTrain] Parsed training data:', { parsedX, parsedY });
+
     if (parsedX.length === 0 || parsedY.length === 0) {
-      alert('Training data is empty. Please add training samples.');
+      alert('Training data is empty after parsing. Please check your input values.');
       return;
     }
 
@@ -98,7 +178,15 @@ function App() {
     // Auto-detect input and output dimensions from data
     const actualInputSize = parsedX[0].length;
     const actualOutputSize = parsedY[0].length;
-    const currentLayers = nnState.config.layers;
+    const currentLayers = config.layers;
+
+    console.log('[handleTrain] Network dimensions:', {
+      actualInputSize,
+      actualOutputSize,
+      currentLayers,
+      learningRate: trainingConfig.learningRate,
+      steps: trainingConfig.steps
+    });
 
     // Auto-adjust network architecture if dimensions don't match
     if (currentLayers[0] !== actualInputSize || currentLayers[currentLayers.length - 1] !== actualOutputSize) {
@@ -118,12 +206,13 @@ function App() {
       await new Promise(resolve => setTimeout(resolve, 0));
     }
 
+    console.log('[handleTrain] Starting training with final config:', config);
     await nnState.train(parsedX, parsedY, onStep);
   }, [nnState]);
 
   // Update prediction when forward pass completes or input changes
   useEffect(() => {
-    if (nnState.isTrained && flowState.predictionInput) {
+    if (isTrained && flowState.predictionInput) {
       try {
         // Parse input if it's a string
         let input = flowState.predictionInput;
@@ -143,10 +232,10 @@ function App() {
       } catch (error) {
         console.error('Prediction error:', error);
       }
-    } else if (!nnState.isTrained) {
+    } else if (!isTrained) {
       flowState.updatePredictionOutput(null);
     }
-  }, [nnState.isTrained, flowState.predictionInput, nnState.predict, flowState.updatePredictionOutput]);
+  }, [isTrained, flowState.predictionInput, nnState.predict, flowState.updatePredictionOutput]);
 
   // Calculate group size based on child nodes
   const calculateGroupSize = useCallback((childNodes) => {
@@ -183,12 +272,12 @@ function App() {
     [flowState.trainingData]
   );
   const configSignature = useMemo(() =>
-    JSON.stringify(nnState.config),
-    [nnState.config.layers, nnState.config.activation, nnState.config.costFunction]
+    JSON.stringify(config),
+    [config.layers, config.activation, config.costFunction]
   );
   const trainingConfigSignature = useMemo(() =>
-    JSON.stringify(nnState.trainingConfig),
-    [nnState.trainingConfig.steps, nnState.trainingConfig.learningRate, nnState.trainingConfig.method]
+    JSON.stringify(trainingConfig),
+    [trainingConfig.steps, trainingConfig.learningRate, trainingConfig.method]
   );
   // Create stable signature for nodes array to prevent infinite loops
   const nodesSignature = useMemo(() =>
@@ -218,7 +307,6 @@ function App() {
               ...baseData,
               x: flowState.trainingData.x,
               y: flowState.trainingData.y,
-              onUpdate: flowState.updateTrainingData,
             }
           };
 
@@ -237,16 +325,11 @@ function App() {
                 isExpanded: flowState.isExpanded,
                 onToggle: flowState.toggleExpanded,
                 label: 'Neural Network',
-                trainingData: flowState.trainingData,
-                config: nnState.config,
-                trainingConfig: nnState.trainingConfig,
+                config: config,
+                trainingConfig: trainingConfig,
                 onNetworkConfigChange: handleConfigUpdate,
                 onTrainingConfigChange: handleTrainingConfigUpdate,
                 onTrain: handleTrain,
-                isTraining: nnState.isTraining,
-                currentStep: nnState.currentStep,
-                trainingHistory: nnState.trainingHistory,
-                isTrained: nnState.isTrained,
               }
             };
           }
@@ -257,14 +340,9 @@ function App() {
               ...baseData,
               isExpanded: flowState.isExpanded,
               onToggle: flowState.toggleExpanded,
-              trainingData: flowState.trainingData,
-              config: nnState.config,
-              trainingConfig: nnState.trainingConfig,
+              config: config,
+              trainingConfig: trainingConfig,
               onTrain: handleTrain,
-              isTraining: nnState.isTraining,
-              currentStep: nnState.currentStep,
-              trainingHistory: nnState.trainingHistory,
-              isTrained: nnState.isTrained,
             }
           };
 
@@ -276,16 +354,26 @@ function App() {
               input: flowState.predictionInput,
               output: flowState.predictionOutput,
               onUpdateInput: flowState.updatePredictionInput,
-              isTrained: nnState.isTrained,
+              onPredict: handlePredict,
+              isTrained: isTrained,
             }
           };
 
         case 'training-progress':
+          // Now reads from context, no data needed
           return {
             ...node,
             data: {
               ...baseData,
-              history: nnState.trainingHistory.slice(-100), // Only pass last 100 entries to prevent memory issues
+            }
+          };
+
+        case 'learning-progress':
+          // Now reads from context and computes predictions itself
+          return {
+            ...node,
+            data: {
+              ...baseData,
             }
           };
 
@@ -294,7 +382,7 @@ function App() {
             ...node,
             data: {
               ...baseData,
-              parameters: nnState.isTrained ? nnState.getParameters() : null,
+              parameters: isTrained ? parameters : null,
             }
           };
 
@@ -303,7 +391,7 @@ function App() {
             ...node,
             data: {
               ...baseData,
-              parameters: nnState.isTrained ? nnState.getParameters() : null,
+              parameters: isTrained ? parameters : null,
               input: flowState.predictionInput,
               network: nnState.network,
               onOutput: flowState.updatePredictionOutput,
@@ -311,9 +399,8 @@ function App() {
           };
 
         default:
-          // Handle dynamic neuron nodes
+          // Handle dynamic neuron nodes - bias now read from context
           if (node.id && node.id.startsWith('neuron-')) {
-            const params = nnState.getParameters();
             const parts = node.id.split('-');
             const layerIndex = parseInt(parts[1]);
             const neuronIndex = parseInt(parts[2]);
@@ -324,37 +411,34 @@ function App() {
                 ...baseData,
                 layerIndex,
                 neuronIndex,
-                bias: params?.biases?.[layerIndex]?.[neuronIndex] || 0,
                 isInput: layerIndex === 0,
-                isOutput: layerIndex === nnState.config.layers.length - 1,
+                isOutput: layerIndex === config.layers.length - 1,
               }
             };
           }
           // Handle dynamic weight and bias nodes (legacy)
           if (node.id && node.id.startsWith('weight-')) {
             const layerIndex = parseInt(node.id.split('-')[1]);
-            const params = nnState.getParameters();
             return {
               ...node,
               data: {
                 ...baseData,
                 layerIndex,
-                weights: params?.weights?.[layerIndex] || [],
-                fromSize: nnState.config.layers[layerIndex],
-                toSize: nnState.config.layers[layerIndex + 1],
+                weights: parameters?.weights?.[layerIndex] || [],
+                fromSize: config.layers[layerIndex],
+                toSize: config.layers[layerIndex + 1],
               }
             };
           }
           if (node.id && node.id.startsWith('bias-')) {
             const layerIndex = parseInt(node.id.split('-')[1]);
-            const params = nnState.getParameters();
             return {
               ...node,
               data: {
                 ...baseData,
                 layerIndex,
-                biases: params?.biases?.[layerIndex] || [],
-                size: nnState.config.layers[layerIndex + 1],
+                biases: parameters?.biases?.[layerIndex] || [],
+                size: config.layers[layerIndex + 1],
               }
             };
           }
@@ -362,6 +446,7 @@ function App() {
       }
     });
   }, [
+    // STRUCTURAL DEPENDENCIES ONLY - only recreate when layout/structure changes
     // Use stable signature instead of array reference
     nodesSignature,
     // Use stable signatures instead of object references
@@ -376,44 +461,24 @@ function App() {
     // Use stable signatures instead of object references
     configSignature,
     trainingConfigSignature,
-    // Only depend on trainingHistory length, not the full array to prevent excessive updates
-    nnState.trainingHistory.length,
-    nnState.isTrained,
-    nnState.isTraining,
-    nnState.currentStep,
-    nnState.getParameters,
+    // Zustand state - stable references
+    isTrained,
+    parameters,
+    config,
+    trainingConfig,
+    // Actions
     handleConfigUpdate,
     handleTrainingConfigUpdate,
     handleTrain,
+    handlePredict,
     handleTrainingStep,
     calculateGroupSize,
+    nnState.network,
   ]);
 
-  // Process edges to add actual weight values
-  const edgesWithWeights = useMemo(() => {
-    return flowState.edges.map(edge => {
-      // Check if this is a neuron-to-neuron edge
-      if (edge.id && edge.id.startsWith('edge-')) {
-        const parts = edge.id.split('-');
-        const layerIdx = parseInt(parts[1]);
-        const fromIdx = parseInt(parts[2]);
-        const toIdx = parseInt(parts[3]);
-
-        const params = nnState.getParameters();
-        const weight = params?.weights?.[layerIdx]?.[toIdx]?.[fromIdx];
-
-        if (weight !== undefined) {
-          return {
-            ...edge,
-            label: `w${layerIdx + 1}${toIdx + 1}${fromIdx + 1} = ${weight.toFixed(2)}`,
-            labelStyle: { fill: '#fff', fontSize: 10 },
-            labelBgStyle: { fill: '#2a2a2a', fillOpacity: 0.8 }
-          };
-        }
-      }
-      return edge;
-    });
-  }, [flowState.edges, nnState.currentStep, nnState.isTrained, nnState.getParameters]);
+  // Edges with weight labels handled by custom WeightEdge component
+  // No need to recreate edges on training updates - component reads from Zustand
+  const edges = useMemo(() => flowState.edges, [flowState.edges]);
 
   return (
     <div className="app">
@@ -423,8 +488,10 @@ function App() {
       </div>
       <FlowCanvas
         nodes={nodesWithData}
-        edges={edgesWithWeights}
+        edges={edges}
         nodeTypes={nodeTypes}
+        edgeTypes={edgeTypes}
+        isExpanded={flowState.isExpanded}
       />
     </div>
   );

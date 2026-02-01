@@ -1,33 +1,58 @@
 import { Handle, NodeResizer, Position } from '@xyflow/react';
+import { useState } from 'react';
+import { useNeuralNetworkStore } from '../../stores/neuralNetworkStore';
 import './NodeStyles.css';
 
 export default function TrainingDataNode({ data, selected }) {
-  const { x = [], y = [], onUpdate } = data;
+  const { x: initialX = [], y: initialY = [] } = data;
+  const [x, setX] = useState(initialX);
+  const [y, setY] = useState(initialY);
+  const updateTrainingData = useNeuralNetworkStore(state => state.updateTrainingData);
 
-  const handleXChange = (index, value) => {
-    const newX = [...x];
-    newX[index] = parseFloat(value) || 0;
-    onUpdate?.({ x: newX, y });
+  const parseValue = (value) => {
+    if (typeof value === 'string') {
+      const parsed = value.split(',').map(v => {
+        const num = parseFloat(v.trim());
+        return isNaN(num) ? 0 : num;
+      }).filter(n => !isNaN(n));
+      return parsed.length > 0 ? parsed : [0];
+    }
+    if (Array.isArray(value)) {
+      return value;
+    }
+    return [value];
   };
 
-  const handleYChange = (index, value) => {
-    const newY = [...y];
-    newY[index] = parseFloat(value) || 0;
-    onUpdate?.({ x, y: newY });
+  const handleSave = (e) => {
+    e.stopPropagation();
+
+    // Parse and validate data
+    const parsedX = x.map(parseValue).filter(arr => arr.length > 0);
+    const parsedY = y.map(parseValue).filter(arr => arr.length > 0);
+
+    if (parsedX.length === 0 || parsedY.length === 0) {
+      alert('Training data is empty. Please add at least one sample.');
+      return;
+    }
+
+    if (parsedX.length !== parsedY.length) {
+      alert(`Data mismatch: ${parsedX.length} inputs but ${parsedY.length} outputs. They must match.`);
+      return;
+    }
+
+    // Save to Zustand store
+    updateTrainingData({ x: parsedX, y: parsedY });
+    alert(`Training data saved! ${parsedX.length} samples ready.`);
   };
 
   const addSample = () => {
-    onUpdate?.({
-      x: [...x, [0]],
-      y: [...y, [0]]
-    });
+    setX([...x, [0]]);
+    setY([...y, [0]]);
   };
 
   const removeSample = (index) => {
-    onUpdate?.({
-      x: x.filter((_, i) => i !== index),
-      y: y.filter((_, i) => i !== index)
-    });
+    setX(x.filter((_, i) => i !== index));
+    setY(y.filter((_, i) => i !== index));
   };
 
   return (
@@ -39,7 +64,17 @@ export default function TrainingDataNode({ data, selected }) {
         minHeight={150}
       />
       <Handle type="target" position={Position.Left} />
-      <div className="node-header">Training Data</div>
+      <div className="node-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <span>Training Data</span>
+        <button
+          onClick={handleSave}
+          onMouseDown={(e) => e.stopPropagation()}
+          className="save-btn nodrag"
+          style={{ padding: '4px 12px', fontSize: '12px' }}
+        >
+          Save
+        </button>
+      </div>
       <div className="node-content">
         <div className="data-section">
           <div className="section-title">Input x[]</div>
@@ -51,7 +86,7 @@ export default function TrainingDataNode({ data, selected }) {
                 onChange={(e) => {
                   const newX = [...x];
                   newX[idx] = e.target.value;
-                  onUpdate?.({ x: newX, y });
+                  setX(newX);
                 }}
                 onMouseDown={(e) => e.stopPropagation()}
                 onPointerDown={(e) => e.stopPropagation()}
@@ -87,7 +122,7 @@ export default function TrainingDataNode({ data, selected }) {
                 onChange={(e) => {
                   const newY = [...y];
                   newY[idx] = e.target.value;
-                  onUpdate?.({ x, y: newY });
+                  setY(newY);
                 }}
                 onMouseDown={(e) => e.stopPropagation()}
                 onPointerDown={(e) => e.stopPropagation()}
