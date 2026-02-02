@@ -16,72 +16,54 @@ export const conceptExplanations = {
       </p>
     `,
     codeSnippet: `// Training data: input → output
-const train = [[0,0], [1,2], [2,4], [3,6], [4,8]];
+const train = { 
+  x: [[0], [1], [2], [3], [4]],
+  y: [[0], [2], [4], [6], [8]],
+};
 
-// Initialize weight randomly
 let w = Math.random() * 10;
-let learningRate = 0.1;
+let learningRate = 1e-1;
+let epsilon = 1e-3;
 
-// Training loop: adjust weight to minimize cost
+// Training loop: adjust weight to minimize loss
 for (let step = 0; step < 50; step++) {
-  // cost() - measures how wrong we are (will be discussed soon)
-  // gradient - tells us how to adjust w (will be discussed soon)
-  
-  let gradient = calculateGradient(w, train);
+  // Finite difference (approximate derivative or gradient)
+  let gradient = (loss(w + epsilon) - loss(w)) / epsilon; 
   w -= learningRate * gradient;
-  
-  console.log(\`Step \${step}: cost = \${cost(w)}, w = \${w}\`);
-}`,
+}
+expect(5 * w).toBeCloseTo(10); // weight should approach 2`,
     fileReference: 'src/utils/neuralNetwork.js',
   },
 
   'hidden-layer': {
     title: 'Hidden Layers',
     explanation: `
-      <p>
-        Hidden layers are the <strong>thinking steps</strong> between input and output.
-        Each layer learns a slightly better version of the data, like having multiple
-        reviewers improve a document before the final version.
-      </p>
-      <p>
-        The more hidden layers you have, the more complex patterns your network can learn.
-        Each neuron in these layers transforms the data: <code>neuronOutput = activate(input × weight + bias)</code>
-      </p>
-    `,
-    codeSnippet: `// Example: 2 hidden layers
-[2, 4, 3, 1];`,
+    <p>
+      Hidden layers are made of small units (neurons) that transform input data into new representations. Each layer combines inputs with learned importance (weights) and a small adjustment (bias), then passes the result forward until the final output is produced.
+    </p>
+    <p>
+      It’s like writing a program by refining logic step by step — first you handle the obvious cases, then add conditions, tweaks, and edge handling, until the final behavior works the way you want.
+    </p>
+  `,
+    codeSnippet: `// Single hidden layer computation
+const X = [x1, x2];          // input vector
+const W = [
+           [w11, w12],       // weight matrix
+           [w21, w22]
+          ];
+const b = [b1, b2];          // bias vector
+
+// Linear transform
+const z = [
+  X[0]*W[0][0] + X[1]*W[1][0] + b[0],
+  X[0]*W[0][1] + X[1]*W[1][1] + b[1],
+];
+
+// Activation (ReLU)
+const h = z.map(v => Math.max(0, v));`,
     fileReference: 'src/utils/neuralNetwork.js',
   },
 
-  'weights-bias': {
-    title: 'Weights & Bias',
-    explanation: `
-      <p>
-        <strong>Weights</strong> determine how much influence each input has on the output.
-        Think of them as importance scores—some inputs matter more than others.
-      </p>
-      <p>
-        <strong>Bias</strong> is like a baseline or starting point. It allows the neuron
-        to adjust its output even when all inputs are zero.
-      </p>
-      <p>
-        Together they work like this: <code>output = (input₁ × weight₁) + (input₂ × weight₂) + ... + bias</code>
-      </p>
-      <p>
-        During training, the network adjusts these weights and biases to minimize errors
-        and learn the right patterns from your data.
-      </p>
-    `,
-    codeSnippet: `// Simple example with weights and bias
-const input = [1, 2];
-const weights = [0.5, 0.8];
-const bias = 0.1;
-
-// Calculate neuron output
-const output = input[0]*weights[0] + input[1]*weights[1] + bias;
-// Result: 1*0.5 + 2*0.8 + 0.1 = 2.2`,
-    fileReference: 'src/utils/neuralNetwork.js',
-  },
 
   'activation': {
     title: 'Activation Functions',

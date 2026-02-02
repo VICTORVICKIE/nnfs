@@ -183,22 +183,24 @@ export default function GroupNode({ data, selected }) {
                 onClick={(e) => {
                   if (openConceptDialog) {
                     e.stopPropagation();
-                    openConceptDialog('cost');
+                    openConceptDialog('learning-rate');
                   }
                 }}
-                title="Click to learn about Cost Function"
+                title="Click to learn about Learning Rate"
               >
-                Cost:
+                LR:
               </span>
-              <select
-                value={pendingCostFunction}
-                onChange={(e) => setPendingCostFunction(e.target.value)}
+              <input
+                type="number"
+                value={pendingLearningRate}
+                onChange={(e) => setPendingLearningRate(parseFloat(e.target.value) || 0)}
                 onMouseDown={(e) => e.stopPropagation()}
                 onPointerDown={(e) => e.stopPropagation()}
-                className="config-select nodrag"
-              >
-                <option value="mse">MSE</option>
-              </select>
+                className="config-input nodrag"
+                placeholder="0.01"
+                min="0.0001"
+                step="0.001"
+              />
             </label>
             <label className="config-label">
               <span
@@ -230,24 +232,22 @@ export default function GroupNode({ data, selected }) {
                 onClick={(e) => {
                   if (openConceptDialog) {
                     e.stopPropagation();
-                    openConceptDialog('learning-rate');
+                    openConceptDialog('cost');
                   }
                 }}
-                title="Click to learn about Learning Rate"
+                title="Click to learn about Loss Function"
               >
-                LR:
+                Loss:
               </span>
-              <input
-                type="number"
-                value={pendingLearningRate}
-                onChange={(e) => setPendingLearningRate(parseFloat(e.target.value) || 0)}
+              <select
+                value={pendingCostFunction}
+                onChange={(e) => setPendingCostFunction(e.target.value)}
                 onMouseDown={(e) => e.stopPropagation()}
                 onPointerDown={(e) => e.stopPropagation()}
-                className="config-input nodrag"
-                placeholder="0.01"
-                min="0.0001"
-                step="0.001"
-              />
+                className="config-select nodrag"
+              >
+                <option value="mse">MSE</option>
+              </select>
             </label>
             <label className="config-label">
               <span
