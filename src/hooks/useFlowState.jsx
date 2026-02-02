@@ -166,46 +166,6 @@ export function useFlowState(config = { hiddenLayers: [3] }) {
     return { nodes, edges };
   }, []);
 
-  // Generate dynamic weight and bias nodes based on network architecture (OLD APPROACH - KEPT FOR BACKWARD COMPATIBILITY)
-  const generateLayerNodes = useCallback((layers) => {
-    const nodes = [];
-    const columnWidth = 200;
-    const rowHeight = 70;
-    const startX = 20;
-    const startY = 60;
-
-    // For each layer transition, create weight and bias nodes
-    for (let i = 0; i < layers.length - 1; i++) {
-      const fromSize = layers[i];
-      const toSize = layers[i + 1];
-      const columnX = startX + (i + 1) * columnWidth;
-
-      // Weight node
-      nodes.push({
-        id: `weight-${i}`,
-        type: 'weight',
-        position: { x: columnX, y: startY },
-        parentId: 'neural-network',
-        extent: 'parent',
-        data: { layerIndex: i, fromSize, toSize },
-        style: { width: 150, height: 50 }
-      });
-
-      // Bias node
-      nodes.push({
-        id: `bias-${i}`,
-        type: 'bias',
-        position: { x: columnX, y: startY + rowHeight },
-        parentId: 'neural-network',
-        extent: 'parent',
-        data: { layerIndex: i, size: toSize },
-        style: { width: 150, height: 50 }
-      });
-    }
-
-    return nodes;
-  }, []);
-
   // Calculate node positions for expanded view (internal nodes as children of group)
   // Arranged in a neat grid layout
   const expandedNodes = useMemo(() => {

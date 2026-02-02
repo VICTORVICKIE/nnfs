@@ -205,20 +205,8 @@
   border-color: #8b5cf6;
 }
 
-.training-loop-node {
-  border-color: #ec4899;
-}
-
 .training-progress-node {
   border-color: #10b981;
-}
-
-.trained-parameters-node {
-  border-color: #f97316;
-}
-
-.forward-pass-node {
-  border-color: #06b6d4;
 }
 
 .neural-network-group-header {

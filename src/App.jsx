@@ -4,19 +4,13 @@ import ConceptDialog from './components/ConceptDialog';
 import ReferencesDialog from './components/ReferencesDialog';
 import WeightEdge from './components/edges/WeightEdge';
 import FlowCanvas from './components/FlowCanvas';
-import BiasNode from './components/nodes/BiasNode';
-import ForwardPassNode from './components/nodes/ForwardPassNode';
 import GroupNode from './components/nodes/GroupNode';
 import LearningProgressNode from './components/nodes/LearningProgressNode';
 import NeuralNetworkNode from './components/nodes/NeuralNetworkNode';
 import NeuronNode from './components/nodes/NeuronNode';
 import PredictionNode from './components/nodes/PredictionNode';
-import SimpleGroupNode from './components/nodes/SimpleGroupNode';
-import TrainedParametersNode from './components/nodes/TrainedParametersNode';
 import TrainingDataNode from './components/nodes/TrainingDataNode';
-import TrainingLoopNode from './components/nodes/TrainingLoopNode';
 import TrainingProgressNode from './components/nodes/TrainingProgressNode';
-import WeightNode from './components/nodes/WeightNode';
 import { useFlowState } from './hooks/useFlowState.jsx';
 import { useNeuralNetwork } from './hooks/useNeuralNetwork';
 import {
@@ -34,16 +28,10 @@ const nodeTypes = {
   trainingData: TrainingDataNode,
   neuralNetwork: NeuralNetworkNode,
   prediction: PredictionNode,
-  trainingLoop: TrainingLoopNode,
   trainingProgress: TrainingProgressNode,
   learningProgress: LearningProgressNode,
-  trainedParameters: TrainedParametersNode,
-  forwardPass: ForwardPassNode,
-  weight: WeightNode,
-  bias: BiasNode,
   neuron: NeuronNode,
   group: GroupNode,
-  simpleGroup: SimpleGroupNode,
 };
 
 const edgeTypes = {
@@ -370,27 +358,6 @@ function App() {
             }
           };
 
-        case 'trained-params':
-          return {
-            ...node,
-            data: {
-              ...baseData,
-              parameters: isTrained ? parameters : null,
-            }
-          };
-
-        case 'forward-pass':
-          return {
-            ...node,
-            data: {
-              ...baseData,
-              parameters: isTrained ? parameters : null,
-              input: flowState.predictionInput,
-              network: nnState.network,
-              onOutput: flowState.updatePredictionOutput,
-            }
-          };
-
         default:
           // Handle dynamic neuron nodes - bias now read from context
           if (node.id && node.id.startsWith('neuron-')) {
@@ -406,32 +373,6 @@ function App() {
                 neuronIndex,
                 isInput: layerIndex === 0,
                 isOutput: layerIndex === (config.hiddenLayers || []).length + 1,
-              }
-            };
-          }
-          // Handle dynamic weight and bias nodes (legacy)
-          if (node.id && node.id.startsWith('weight-')) {
-            const layerIndex = parseInt(node.id.split('-')[1]);
-            return {
-              ...node,
-              data: {
-                ...baseData,
-                layerIndex,
-                weights: parameters?.weights?.[layerIndex] || [],
-                fromSize: 1,  // Will be determined at training time
-                toSize: 1,
-              }
-            };
-          }
-          if (node.id && node.id.startsWith('bias-')) {
-            const layerIndex = parseInt(node.id.split('-')[1]);
-            return {
-              ...node,
-              data: {
-                ...baseData,
-                layerIndex,
-                biases: parameters?.biases?.[layerIndex] || [],
-                size: 1,  // Will be determined at training time
               }
             };
           }
