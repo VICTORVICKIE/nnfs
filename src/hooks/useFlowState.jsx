@@ -27,7 +27,10 @@ export function useFlowState(config = { hiddenLayers: [3] }) {
   // Read training data from Zustand store instead of local state
   const trainingData = useNeuralNetworkStore(state => state.trainingData);
   
-  const [predictionInput, setPredictionInput] = useState([7]);
+  // Read prediction input from Zustand store instead of local state
+  const predictionInput = useNeuralNetworkStore(state => state.predictionInput);
+  const updatePredictionInputStore = useNeuralNetworkStore(state => state.updatePredictionInput);
+  
   const [predictionOutput, setPredictionOutput] = useState(null);
 
   // Build full layers from hidden layers + actual input/output sizes from training data
@@ -73,8 +76,8 @@ export function useFlowState(config = { hiddenLayers: [3] }) {
   }, []);
 
   const updatePredictionInput = useCallback((input) => {
-    setPredictionInput(input);
-  }, []);
+    updatePredictionInputStore(input);
+  }, [updatePredictionInputStore]);
 
   const updatePredictionOutput = useCallback((output) => {
     setPredictionOutput(output);

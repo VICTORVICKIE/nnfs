@@ -1,6 +1,5 @@
 import { Handle, NodeResizer, Position, useReactFlow } from '@xyflow/react';
-import { Save } from 'lucide-react';
-import { useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNeuralNetworkStore } from '../../stores/neuralNetworkStore';
 import { resolveCollisions } from '../../utils/collisionDetection';
 import './NodeStyles.css';
@@ -81,11 +80,12 @@ export default function TrainingDataNode({ data, selected }) {
   const { x: initialX = [], y: initialY = [], openConceptDialog } = data;
   const [x, setX] = useState(initialX);
   const [y, setY] = useState(initialY);
-  const [selectedPreset, setSelectedPreset] = useState('custom');
+  const [selectedPreset, setSelectedPreset] = useState('twice');
   const [hasError, setHasError] = useState(false);
   const updateTrainingData = useNeuralNetworkStore(state => state.updateTrainingData);
   const updateConfig = useNeuralNetworkStore(state => state.updateConfig);
   const { setNodes } = useReactFlow();
+  const saveTimeoutRef = useRef(null);
 
   const handleResizeEnd = () => {
     setNodes((nds) =>
@@ -111,17 +111,15 @@ export default function TrainingDataNode({ data, selected }) {
     return [value];
   };
 
-  const handleSave = (e) => {
-    e.stopPropagation();
-
+  const saveData = useCallback(() => {
     // Parse and validate data
     const parsedX = x.map(parseValue).filter(arr => arr.length > 0);
     const parsedY = y.map(parseValue).filter(arr => arr.length > 0);
 
-    console.log('[TrainingDataNode] handleSave - raw x:', x);
-    console.log('[TrainingDataNode] handleSave - raw y:', y);
-    console.log('[TrainingDataNode] handleSave - parsed x:', parsedX);
-    console.log('[TrainingDataNode] handleSave - parsed y:', parsedY);
+    console.log('[TrainingDataNode] Auto-save - raw x:', x);
+    console.log('[TrainingDataNode] Auto-save - raw y:', y);
+    console.log('[TrainingDataNode] Auto-save - parsed x:', parsedX);
+    console.log('[TrainingDataNode] Auto-save - parsed y:', parsedY);
 
     if (parsedX.length === 0 || parsedY.length === 0) {
       setHasError(true);
@@ -151,7 +149,27 @@ export default function TrainingDataNode({ data, selected }) {
         useNeuralNetworkStore.getState().updatePredictionInput(dataset.predictionDefault);
       }
     }
-  };
+  }, [x, y, selectedPreset, updateTrainingData, updateConfig]);
+
+  // Auto-save with debouncing (500ms delay)
+  useEffect(() => {
+    // Clear any pending save
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+
+    // Schedule new save
+    saveTimeoutRef.current = setTimeout(() => {
+      saveData();
+    }, 500);
+
+    // Cleanup on unmount
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+    };
+  }, [x, y, saveData]);
 
   const handlePresetChange = (e) => {
     const preset = e.target.value;
@@ -196,28 +214,18 @@ export default function TrainingDataNode({ data, selected }) {
         onResizeEnd={handleResizeEnd}
       />
       <Handle type="target" position={Position.Left} />
-      <div className="node-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <span
-          className="clickable-header"
-          onClick={(e) => {
-            if (openConceptDialog) {
-              e.stopPropagation();
-              openConceptDialog('training-data');
-            }
-          }}
-          title="Click to learn about Training Data"
-          style={{ cursor: openConceptDialog ? 'pointer' : 'default' }}
-        >
-          Training Data
-        </span>
-        <button
-          onClick={handleSave}
-          onMouseDown={(e) => e.stopPropagation()}
-          className="icon-btn save-btn nodrag"
-          title="Save"
-        >
-          <Save size={18} />
-        </button>
+      <div
+        className="node-header clickable-header"
+        onClick={(e) => {
+          if (openConceptDialog) {
+            e.stopPropagation();
+            openConceptDialog('training-data');
+          }
+        }}
+        title="Click to learn about Training Data"
+        style={{ cursor: openConceptDialog ? 'pointer' : 'default' }}
+      >
+        Training Data
       </div>
       <div className="node-content">
         <div className="data-section" style={{ marginBottom: '10px' }}>

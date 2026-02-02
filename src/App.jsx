@@ -20,7 +20,6 @@ import {
   selectParameters,
   selectTrainingConfig,
   selectTrainingData,
-  selectUpdatePredictionInput,
   useNeuralNetworkStore,
 } from './stores/neuralNetworkStore';
 
@@ -54,14 +53,6 @@ function App() {
   // Use neural network hook (syncs with Zustand internally)
   const nnState = useNeuralNetwork();
   const flowState = useFlowState(config);
-
-  // Get store actions
-  const updatePredictionInput = useNeuralNetworkStore(selectUpdatePredictionInput);
-
-  // Sync flow state prediction input to store
-  useEffect(() => {
-    updatePredictionInput(flowState.predictionInput);
-  }, [flowState.predictionInput, updatePredictionInput]);
 
   // Handle configuration updates (invalidates training)
   const handleConfigUpdate = useCallback((newConfig) => {

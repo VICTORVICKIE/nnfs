@@ -1,4 +1,5 @@
 import { Handle, NodeResizer, Position, useReactFlow } from '@xyflow/react';
+import { Play, Square } from 'lucide-react';
 import { useState } from 'react';
 import {
   selectCurrentStep,
@@ -26,6 +27,7 @@ export default function NeuralNetworkNode({ data, selected }) {
     config = {},
     trainingConfig = {},
     onTrain,
+    onCancelTraining,
     openConceptDialog,
   } = data;
 
@@ -109,25 +111,40 @@ export default function NeuralNetworkNode({ data, selected }) {
           <Cube3D onClick={onToggle} isExpanded={isExpanded} />
         </div>
         <div className="train-section-collapsed">
-          <button
-            onClick={handleTrain}
-            disabled={isRunning || isTraining}
-            className={`train-btn ${isRunning || isTraining ? 'running' : ''}`}
-          >
-            {isRunning || isTraining ? 'Training...' : 'Start Training'}
-          </button>
-          {(isRunning || isTraining || isTrained) && (
-            <div className="training-status">
-              {(displayStep > 0 || isTrained) && (
-                <>
-                  <div className="section-title">Step: {displayStep + 1} / {trainingConfig.steps}</div>
-                  {displayLoss !== null && (
-                    <div className="section-title">Loss: {displayLoss.toFixed(6)}</div>
-                  )}
-                </>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+              <button
+                onClick={handleTrain}
+                disabled={isRunning || isTraining}
+                className="icon-btn train-btn"
+                title={isRunning || isTraining ? 'Training...' : 'Start Training'}
+                style={{ width: '32px', height: '32px' }}
+              >
+                <Play size={18} />
+              </button>
+              {(isRunning || isTraining) && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onCancelTraining?.();
+                  }}
+                  className="icon-btn cancel-btn"
+                  title="Stop Training"
+                  style={{ width: '32px', height: '32px' }}
+                >
+                  <Square size={18} />
+                </button>
               )}
             </div>
-          )}
+            {(isRunning || isTraining || isTrained) && (displayStep > 0 || isTrained) && (
+              <div className="training-status" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '2px' }}>
+                <div className="section-title" style={{ fontSize: '11px', margin: 0 }}>Step: {displayStep + 1} / {trainingConfig.steps}</div>
+                {displayLoss !== null && (
+                  <div className="section-title" style={{ fontSize: '11px', margin: 0 }}>Loss: {displayLoss.toFixed(6)}</div>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       </div>
       <Handle type="source" position={Position.Right} id="output" />
