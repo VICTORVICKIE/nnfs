@@ -31,7 +31,7 @@ export default function ReferencesDialog({ onClose }) {
                                     target="_blank" 
                                     rel="noopener noreferrer"
                                 >
-                                    Neural Networks from Scratch - Tsoding Daily
+                                    Neural Networks from Scratch - Tsoding
                                 </a>
                             </li>
                             <li>
@@ -58,7 +58,25 @@ export default function ReferencesDialog({ onClose }) {
                                     target="_blank" 
                                     rel="noopener noreferrer"
                                 >
-                                    Training Progress Simple Explanation Image (Jeremy Jordan)
+                                    Training Progress Simple Explanation Image - Jeremy Jordan
+                                </a>
+                            </li>
+                            <li>
+                                <a 
+                                    href="https://www.jeremyjordan.me/content/images/2018/01/Screen-Shot-2017-11-07-at-12.32.19-PM.png" 
+                                    target="_blank" 
+                                    rel="noopener noreferrer"
+                                >
+                                    Matrix Multiplications Image - Jeremy Jordan
+                                </a>
+                            </li>
+                            <li>
+                                <a 
+                                    href="https://nsweb.tn.tudelft.nl/~gsteele/TN2513_2019_2020/3%20Differentiation.html#Overview-of-finite-difference-methods" 
+                                    target="_blank" 
+                                    rel="noopener noreferrer"
+                                >
+                                    Finite Difference - Gary Steele's Old TU-Delft Website
                                 </a>
                             </li>
                             <li>
@@ -67,7 +85,16 @@ export default function ReferencesDialog({ onClose }) {
                                     target="_blank" 
                                     rel="noopener noreferrer"
                                 >
-                                    Backpropagation Simple Explanation (Indeera Weerasinghe)
+                                    Backpropagation Simple Explanation - Indeera Weerasinghe
+                                </a>
+                            </li>
+                            <li>
+                                <a 
+                                    href="https://i0.wp.com/sefiks.com/wp-content/uploads/2020/02/sample-activation-functions-square.png" 
+                                    target="_blank" 
+                                    rel="noopener noreferrer"
+                                >
+                                    Activation Functions Image - Sefik Ilkin Serengil
                                 </a>
                             </li>
                         </ul>

@@ -42,25 +42,16 @@ expect(5 * w).toBeCloseTo(10); // weight should approach 2`,
       Hidden layers are made of small units (neurons) that transform input data into new representations. Each layer combines inputs with learned importance (weights) and a small adjustment (bias), then passes the result forward until the final output is produced.
     </p>
     <p>
-      It’s like writing a program by refining logic step by step — first you handle the obvious cases, then add conditions, tweaks, and edge handling, until the final behavior works the way you want.
+      It's like writing a program by refining logic step by step — first you handle the obvious cases, then add conditions, tweaks, and edge handling, until the final behavior works the way you want.
     </p>
+    <div style="text-align: center; margin: 20px 0;">
+      <img 
+        src="matrix-multiplications.png" 
+        alt="Matrix Multiplications"
+        style="max-width: 100%; max-height: 60vh; display: block; margin: 0 auto;"
+      />
+    </div>
   `,
-    codeSnippet: `// Single hidden layer computation
-const X = [x1, x2];          // input vector
-const W = [
-           [w11, w12],       // weight matrix
-           [w21, w22]
-          ];
-const b = [b1, b2];          // bias vector
-
-// Linear transform
-const z = [
-  X[0]*W[0][0] + X[1]*W[1][0] + b[0],
-  X[0]*W[0][1] + X[1]*W[1][1] + b[1],
-];
-
-// Activation (ReLU)
-const h = z.map(v => Math.max(0, v));`,
     fileReference: 'src/utils/neuralNetwork.js',
   },
 
@@ -76,9 +67,14 @@ const h = z.map(v => Math.max(0, v));`,
         Think of it as a filter that blocks weak signals. The most common one is ReLU,
         which simply keeps positive values and removes negative ones: <code>ReLU(x) = max(0, x)</code>
       </p>
+      <div style="text-align: center; margin: 20px 0;">
+        <img 
+          src="activation-functions.png" 
+          alt="Activation Functions"
+          style="max-width: 100%; max-height: 60vh; display: block; margin: 0 auto;"
+        />
+      </div>
     `,
-    codeSnippet: `// ReLU activation
-Math.max(0, value);`,
     fileReference: 'src/utils/neuralNetwork.js',
   },
 
@@ -132,9 +128,14 @@ y: [[2], [4], [6], [8], [10], [12], [14], [16]]`,
       <p>
         The formula is: <code>newWeight = oldWeight − learningRate × error</code>
       </p>
+      <div style="text-align: center; margin: 20px 0;">
+        <img 
+          src="training-progress.png" 
+          alt="Training Progress Visualization"
+          style="max-width: 100%; max-height: 60vh; display: block; margin: 0 auto;"
+        />
+      </div>
     `,
-    codeSnippet: `// Example learning rate
-learningRate = 0.01;`,
     fileReference: 'src/utils/neuralNetwork.js',
   },
 
@@ -212,7 +213,7 @@ learningRate = 0.01;`,
         </p>
         <div style="text-align: center; margin: 20px 0;">
           <img 
-            src="derivative.png" 
+            src="finite-difference.png" 
             alt="Finite Difference Method"
             style="max-width: 80%; max-height: 50vh; display: block; margin: 0 auto; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);"
           />
@@ -223,12 +224,39 @@ learningRate = 0.01;`,
           <strong>Backpropagation</strong> is fast and accurate like using GPS navigation
           to find the best route. It's what everyone uses in practice.
         </p>
-        <div style="text-align: center; margin: 20px 0;">
-          <img 
-            src="backpropagation.png" 
-            alt="Backpropagation Method"
-            style="max-width: 80%; max-height: 50vh; display: block; margin: 0 auto; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);"
-          />
+        <div style="text-align: center; margin: 20px 0; position: relative; display: flex; align-items: center; justify-content: center;">
+          <button 
+            id="backprop-prev" 
+            onclick="var img0 = document.getElementById('backprop-img-0'); var img1 = document.getElementById('backprop-img-1'); if (img0.style.display === 'none') { img0.style.display = 'block'; img1.style.display = 'none'; }"
+            style="width: 40px; height: 40px; border-radius: 50%; background: rgba(68, 68, 68, 0.8); color: #fff; border: 1px solid #666; cursor: pointer; display: flex; align-items: center; justify-content: center; margin-right: 15px; flex-shrink: 0; padding: 0;"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="m15 18-6-6 6-6"/>
+            </svg>
+          </button>
+          <div id="backprop-carousel" style="position: relative; flex: 1; max-width: 80%;">
+            <img 
+              id="backprop-img-0"
+              src="derivative.png" 
+              alt="Backpropagation Method - Derivative"
+              style="max-width: 100%; max-height: 50vh; display: block; margin: 0 auto; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);"
+            />
+            <img 
+              id="backprop-img-1"
+              src="backpropagation.png" 
+              alt="Backpropagation Method"
+              style="max-width: 100%; max-height: 50vh; display: none; margin: 0 auto; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);"
+            />
+          </div>
+          <button 
+            id="backprop-next" 
+            onclick="var img0 = document.getElementById('backprop-img-0'); var img1 = document.getElementById('backprop-img-1'); if (img1.style.display === 'none') { img0.style.display = 'none'; img1.style.display = 'block'; }"
+            style="width: 40px; height: 40px; border-radius: 50%; background: rgba(68, 68, 68, 0.8); color: #fff; border: 1px solid #666; cursor: pointer; display: flex; align-items: center; justify-content: center; margin-left: 15px; flex-shrink: 0; padding: 0;"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="m9 18 6-6-6-6"/>
+            </svg>
+          </button>
         </div>
       </div>
     `,
