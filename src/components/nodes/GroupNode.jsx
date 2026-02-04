@@ -122,7 +122,7 @@ export default function GroupNode({ data, selected }) {
           }}
           title="Click to learn about Neural Networks"
         >
-          {label}
+          1. {label}
         </div>
         {isTrained && (
           <div className="config-warning">⚠️ Changes will invalidate training</div>

@@ -48,7 +48,7 @@ export default function TrainingProgressNode({ data, selected }) {
         title="Click to learn about Training Progress"
         style={{ cursor: openConceptDialog ? 'pointer' : 'default' }}
       >
-        Training Progress
+        3.a Training Progress
       </div>
       {(
         <div className="node-content">

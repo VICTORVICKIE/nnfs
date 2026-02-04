@@ -36,6 +36,15 @@ export default function ReferencesDialog({ onClose }) {
                             </li>
                             <li>
                                 <a 
+                                    href="https://www.ibm.com/think/machine-learning" 
+                                    target="_blank" 
+                                    rel="noopener noreferrer"
+                                >
+                                    IBM: Machine Learning
+                                </a>
+                            </li>
+                            <li>
+                                <a 
                                     href="https://xkcd.com/1838/" 
                                     target="_blank" 
                                     rel="noopener noreferrer"
@@ -49,7 +58,16 @@ export default function ReferencesDialog({ onClose }) {
                                     target="_blank" 
                                     rel="noopener noreferrer"
                                 >
-                                    Learning Rate Explanation
+                                    Training Progress Simple Explanation Image (Jeremy Jordan)
+                                </a>
+                            </li>
+                            <li>
+                                <a 
+                                    href="https://media.licdn.com/dms/image/v2/D5612AQECXl0DLimxgQ/article-cover_image-shrink_600_2000/article-cover_image-shrink_600_2000/0/1726329287502?e=2147483647&v=beta&t=T-f2b7Omn7oQylTvfrBu5zNw-xlIrizWLCnPoO1Jpcc" 
+                                    target="_blank" 
+                                    rel="noopener noreferrer"
+                                >
+                                    Backpropagation Simple Explanation (Indeera Weerasinghe)
                                 </a>
                             </li>
                         </ul>

@@ -104,7 +104,7 @@ export default function NeuralNetworkNode({ data, selected }) {
         }}
         title="Click to learn about Neural Networks"
       >
-        Neural Network
+        1. Neural Network
       </div>
       <div className="node-content">
         <div className="cube-container" onClick={onToggle}>

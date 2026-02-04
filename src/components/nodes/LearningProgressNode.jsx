@@ -65,7 +65,7 @@ export default function LearningProgressNode({ data, selected }) {
                 }}
                 style={{ cursor: 'pointer' }}
             >
-                Learning Progress
+                3.b Learning Progress
             </div>
             <div className="node-content">
                 <div className="chart-container">

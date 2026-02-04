@@ -82,6 +82,7 @@ export default function TrainingDataNode({ data, selected }) {
   const [y, setY] = useState(initialY);
   const [selectedPreset, setSelectedPreset] = useState('twice');
   const [hasError, setHasError] = useState(false);
+  const [isDataCollapsed, setIsDataCollapsed] = useState(true);
   const updateTrainingData = useNeuralNetworkStore(state => state.updateTrainingData);
   const updateConfig = useNeuralNetworkStore(state => state.updateConfig);
   const { setNodes } = useReactFlow();
@@ -213,7 +214,6 @@ export default function TrainingDataNode({ data, selected }) {
         minHeight={150}
         onResizeEnd={handleResizeEnd}
       />
-      <Handle type="target" position={Position.Left} />
       <div
         className="node-header clickable-header"
         onClick={(e) => {
@@ -225,7 +225,7 @@ export default function TrainingDataNode({ data, selected }) {
         title="Click to learn about Training Data"
         style={{ cursor: openConceptDialog ? 'pointer' : 'default' }}
       >
-        Training Data
+        2. Training Data
       </div>
       <div className="node-content">
         <div className="data-section" style={{ marginBottom: '10px' }}>
@@ -238,7 +238,7 @@ export default function TrainingDataNode({ data, selected }) {
             style={{
               width: '100%',
               padding: '6px',
-              fontSize: '12px',
+              fontSize: '14px',
               borderRadius: '4px',
               border: '1px solid #444',
               backgroundColor: '#2a2a2a',
@@ -254,7 +254,7 @@ export default function TrainingDataNode({ data, selected }) {
           </select>
           {selectedPreset !== 'custom' && PRESET_DATASETS[selectedPreset] && (
             <div style={{
-              fontSize: '11px',
+              fontSize: '12px',
               color: '#888',
               marginTop: '4px',
               fontStyle: 'italic'
@@ -264,65 +264,97 @@ export default function TrainingDataNode({ data, selected }) {
             </div>
           )}
         </div>
-        <div className="data-section">
-          <div className="section-title">Input x[]</div>
-          {x.map((sample, idx) => (
-            <div key={idx} className="sample-row">
-              <input
-                type="text"
-                value={Array.isArray(sample) ? sample.join(', ') : sample}
-                onChange={(e) => {
-                  const newX = [...x];
-                  newX[idx] = e.target.value;
-                  setX(newX);
-                  setHasError(false);
-                }}
-                onMouseDown={(e) => e.stopPropagation()}
-                onPointerDown={(e) => e.stopPropagation()}
-                className="data-input nodrag"
-                placeholder="1"
-                style={hasError ? { border: '2px solid #ef4444' } : {}}
-              />
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  removeSample(idx);
-                }}
-                onMouseDown={(e) => e.stopPropagation()}
-                className="remove-btn nodrag"
-              >×</button>
-            </div>
-          ))}
-          <button
+        <div className="data-section" style={{ marginTop: '10px' }}>
+          <div
+            className="section-title"
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              cursor: 'pointer',
+              userSelect: 'none',
+              padding: '4px 0'
+            }}
             onClick={(e) => {
               e.stopPropagation();
-              addSample();
+              setIsDataCollapsed(!isDataCollapsed);
             }}
             onMouseDown={(e) => e.stopPropagation()}
-            className="add-btn nodrag"
-          >+ Add Sample</button>
-        </div>
-        <div className="data-section">
-          <div className="section-title">Expected Output y[]</div>
-          {y.map((sample, idx) => (
-            <div key={idx} className="sample-row">
-              <input
-                type="text"
-                value={Array.isArray(sample) ? sample.join(', ') : sample}
-                onChange={(e) => {
-                  const newY = [...y];
-                  newY[idx] = e.target.value;
-                  setY(newY);
-                  setHasError(false);
-                }}
-                onMouseDown={(e) => e.stopPropagation()}
-                onPointerDown={(e) => e.stopPropagation()}
-                className="data-input nodrag"
-                placeholder="0"
-                style={hasError ? { border: '2px solid #ef4444' } : {}}
-              />
-            </div>
-          ))}
+          >
+            <span>Data</span>
+            <span style={{
+              fontSize: '12px',
+              color: '#aaa',
+              transition: 'transform 0.2s',
+              transform: isDataCollapsed ? 'rotate(-90deg)' : 'rotate(0deg)'
+            }}>
+              ▼
+            </span>
+          </div>
+          {!isDataCollapsed && (
+            <>
+              <div className="data-section" style={{ marginTop: '8px' }}>
+                <div className="section-title">Input x[]</div>
+                {x.map((sample, idx) => (
+                  <div key={idx} className="sample-row">
+                    <input
+                      type="text"
+                      value={Array.isArray(sample) ? sample.join(', ') : sample}
+                      onChange={(e) => {
+                        const newX = [...x];
+                        newX[idx] = e.target.value;
+                        setX(newX);
+                        setHasError(false);
+                      }}
+                      onMouseDown={(e) => e.stopPropagation()}
+                      onPointerDown={(e) => e.stopPropagation()}
+                      className="data-input nodrag"
+                      placeholder="1"
+                      style={hasError ? { border: '2px solid #ef4444' } : {}}
+                    />
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        removeSample(idx);
+                      }}
+                      onMouseDown={(e) => e.stopPropagation()}
+                      className="remove-btn nodrag"
+                    >×</button>
+                  </div>
+                ))}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    addSample();
+                  }}
+                  onMouseDown={(e) => e.stopPropagation()}
+                  className="add-btn nodrag"
+                >+ Add Sample</button>
+              </div>
+              <div className="data-section">
+                <div className="section-title">Expected Output y[]</div>
+                {y.map((sample, idx) => (
+                  <div key={idx} className="sample-row">
+                    <input
+                      type="text"
+                      value={Array.isArray(sample) ? sample.join(', ') : sample}
+                      onChange={(e) => {
+                        const newY = [...y];
+                        newY[idx] = e.target.value;
+                        setY(newY);
+                        setHasError(false);
+                      }}
+                      onMouseDown={(e) => e.stopPropagation()}
+                      onPointerDown={(e) => e.stopPropagation()}
+                      className="data-input nodrag"
+                      placeholder="0"
+                      style={hasError ? { border: '2px solid #ef4444' } : {}}
+                    />
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
         </div>
       </div>
       <Handle type="source" position={Position.Right} id="output" />

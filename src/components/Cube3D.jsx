@@ -151,7 +151,7 @@ export default function Cube3D({ onClick, isExpanded = false }) {
       </svg>
 
       {!isExpanded && (
-        <div className="cube-label">Neural Network</div>
+        <div className="cube-label">Explore more</div>
       )}
     </div>
   );

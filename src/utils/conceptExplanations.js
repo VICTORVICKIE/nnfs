@@ -190,7 +190,7 @@ learningRate = 0.01;`,
       </p>
       <div style="text-align: center; margin: 20px 0;">
         <img 
-          src="https://www.jeremyjordan.me/content/images/2018/02/Screen-Shot-2018-02-24-at-11.47.09-AM.png" 
+          src="training-progress.png" 
           alt="Training Progress Visualization"
           style="max-width: 100%; max-height: 60vh; display: block; margin: 0 auto;"
         />
@@ -205,20 +205,33 @@ learningRate = 0.01;`,
       <p>
         Training method is <strong>how the network calculates what to fix</strong>.
       </p>
-      <p>
-        <strong>Backpropagation</strong> is fast and accurate like using GPS navigation
-        to find the best route. It's what everyone uses in practice.
-      </p>
-      <p>
-        <strong>Finite Difference</strong> is slower but simpler to understand. It's like
-        trying every possible turn to see which one works best.
-      </p>
+      <div style="margin: 30px 0;">
+        <p>
+          <strong>Finite Difference</strong> is slower but simpler to understand. It's like
+          trying every possible turn to see which one works best.
+        </p>
+        <div style="text-align: center; margin: 20px 0;">
+          <img 
+            src="derivative.png" 
+            alt="Finite Difference Method"
+            style="max-width: 80%; max-height: 50vh; display: block; margin: 0 auto; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);"
+          />
+        </div>
+      </div>
+      <div style="margin: 30px 0;">
+        <p>
+          <strong>Backpropagation</strong> is fast and accurate like using GPS navigation
+          to find the best route. It's what everyone uses in practice.
+        </p>
+        <div style="text-align: center; margin: 20px 0;">
+          <img 
+            src="backpropagation.png" 
+            alt="Backpropagation Method"
+            style="max-width: 80%; max-height: 50vh; display: block; margin: 0 auto; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);"
+          />
+        </div>
+      </div>
     `,
-    codeSnippet: `// Backpropagation (default)
-method: 'backpropagation'
-
-// Finite Difference
-method: 'finite-difference'`,
     fileReference: 'src/utils/neuralNetwork.js',
   },
 
@@ -227,7 +240,7 @@ method: 'finite-difference'`,
     explanation: `
       <div style="text-align: center; margin: 20px 0;">
         <img 
-          src="https://imgs.xkcd.com/comics/machine_learning.png" 
+          src="machine-learning-xkcd.png" 
           alt="Machine Learning - XKCD"
           style="max-width: 100%; max-height: 70vh; display: block; margin: 0 auto;"
         />

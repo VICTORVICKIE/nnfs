@@ -69,7 +69,7 @@ export default function PredictionNode({ data, selected }) {
         title="Click to learn about Prediction"
         style={{ cursor: openConceptDialog ? 'pointer' : 'default' }}
       >
-        Prediction
+        4. Prediction
       </div>
       <div className="node-content">
         {!isTrained && (

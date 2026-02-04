@@ -8,10 +8,21 @@
   padding: 10px;
   pointer-events: all;
   user-select: none;
+  animation: throb 2s ease-in-out infinite;
+}
+
+@keyframes throb {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.08);
+  }
 }
 
 .cube-3d-container:hover {
-  transform: scale(1.05);
+  animation: none;
+  transform: scale(1.1);
 }
 
 .cube-3d-container.expanded {
@@ -33,9 +44,9 @@
 }
 
 .cube-label {
-  margin-top: 5px;
-  font-size: 10px;
-  color: #888;
+  margin-top: 8px;
+  font-size: 11px;
+  color: #aaa;
   text-align: center;
   font-weight: 500;
 }
